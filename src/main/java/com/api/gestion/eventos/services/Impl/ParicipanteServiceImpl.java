@@ -1,13 +1,13 @@
-package com.api.gestion.eventos.services;
+package com.api.gestion.eventos.services.Impl;
 
 import com.api.gestion.eventos.dtos.ParticipanteDto;
 import com.api.gestion.eventos.entities.Participante;
 import com.api.gestion.eventos.mappers.ParticipanteMapper;
 import com.api.gestion.eventos.repositories.ParticipanteRepository;
+import com.api.gestion.eventos.services.ParticipanteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -33,7 +33,9 @@ public class ParicipanteServiceImpl implements ParticipanteService {
 
     @Override
     public ParticipanteDto buscarporId(Long id) {
-        return null;
+        Participante participante = participanteRepository.findById(id).orElseThrow(() -> new RuntimeException("Participante no encontrado con id: " + id));
+        ParticipanteDto participanteDto = ParticipanteMapper.mapearaDto(participante);
+        return participanteDto;
     }
 
     @Override
@@ -43,6 +45,6 @@ public class ParicipanteServiceImpl implements ParticipanteService {
 
     @Override
     public void eliminarporId(Long id) {
-
+        participanteRepository.deleteById(id);
     }
 }

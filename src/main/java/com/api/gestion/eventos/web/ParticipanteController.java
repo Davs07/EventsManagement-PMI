@@ -12,12 +12,12 @@ import java.util.List;
 public class ParticipanteController {
     @Autowired
     private ParticipanteService participanteService;
-
-    @PostMapping ("/guardar")
+    //ACTUALIZAR DTO
+    @PostMapping ("/crear")
     public ParticipanteDto guardar (@RequestBody ParticipanteDto participanteDto){
         return participanteService.crear(participanteDto);
     }
-
+    //ACTUALIZAR DTO
     @GetMapping ("/listar")
     public List<ParticipanteDto> listar(){
         return participanteService.listar();

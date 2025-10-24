@@ -1,6 +1,7 @@
 package com.api.gestion.eventos.entities;
 
 import com.api.gestion.eventos.enums.RolParticipante;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -20,9 +21,11 @@ public class Asistencia {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JsonBackReference(value = "participante-asistencias")
     private Participante participante;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JsonBackReference(value = "evento-asistencias")
     private Evento evento;
 
     @Enumerated(EnumType.STRING)
@@ -34,7 +37,7 @@ public class Asistencia {
     private byte[] certificado;
 
     @Lob
-    private byte[] codigoQr;
+    private String codigoQr;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime fechaRegistro = LocalDateTime.now();
