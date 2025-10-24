@@ -3,19 +3,19 @@ package com.api.gestion.eventos.entities;
 import com.api.gestion.eventos.enums.EstadoEvento;
 import com.api.gestion.eventos.enums.TipoEvento;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 public class Evento {
     @Id
@@ -29,7 +29,6 @@ public class Evento {
     private String descripcion;
 
     private LocalDateTime fechaInicio;
-
     private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
@@ -64,4 +63,17 @@ public class Evento {
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL)
     private Set<Asistencia> asistencias = new HashSet<>();
 
+    // ⚠️ equals y hashCode SOLO con id
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Evento)) return false;
+        Evento evento = (Evento) o;
+        return Objects.equals(id, evento.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

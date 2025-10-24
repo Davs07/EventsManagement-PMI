@@ -2,17 +2,17 @@ package com.api.gestion.eventos.entities;
 
 import com.api.gestion.eventos.enums.RolParticipante;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 public class Asistencia {
     @Id
@@ -26,7 +26,7 @@ public class Asistencia {
     private Evento evento;
 
     @Enumerated(EnumType.STRING)
-    private RolParticipante rol; //Como participa en el evento
+    private RolParticipante rol;
 
     private LocalDateTime horaIngreso;
 
@@ -44,4 +44,18 @@ public class Asistencia {
 
     @Column(nullable = false)
     private Boolean asistio = false;
+
+    // ⚠️ equals y hashCode SOLO con id
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Asistencia)) return false;
+        Asistencia that = (Asistencia) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
