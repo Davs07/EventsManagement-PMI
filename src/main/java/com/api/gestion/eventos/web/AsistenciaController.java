@@ -16,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("api/asistencias")
+@CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 public class AsistenciaController {
 
     @Autowired
@@ -115,6 +116,37 @@ public class AsistenciaController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al procesar la imagen QR: " + e.getMessage());
+        }
+    }
+
+    // Obtener asistencia específica por participante y evento
+    @GetMapping("/participante/{participanteId}/evento/{eventoId}")
+    public ResponseEntity<AsistenciaDTO> obtenerAsistenciaPorParticipanteYEvento(
+            @PathVariable Long participanteId,
+            @PathVariable Long eventoId) {
+        try {
+            Asistencia asistencia = asistenciaService.obtenerAsistenciaPorParticipanteYEvento(participanteId, eventoId);
+            return ResponseEntity.ok(AsistenciaMapper.toDto(asistencia));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Actualizar solo el estado de asistencia
+    @PatchMapping("/participante/{participanteId}/evento/{eventoId}/estado")
+    public ResponseEntity<AsistenciaDTO> actualizarEstadoAsistencia(
+            @PathVariable Long participanteId,
+            @PathVariable Long eventoId,
+            @RequestBody Map<String, Boolean> request) {
+        try {
+            Boolean asistio = request.get("asistio");
+            if (asistio == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            Asistencia actualizada = asistenciaService.actualizarEstadoAsistencia(participanteId, eventoId, asistio);
+            return ResponseEntity.ok(AsistenciaMapper.toDto(actualizada));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }

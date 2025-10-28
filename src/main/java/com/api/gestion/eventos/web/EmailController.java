@@ -18,6 +18,7 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/email")
+@CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 public class EmailController {
 
     private final EmailService emailService;

@@ -1,6 +1,8 @@
 package com.api.gestion.eventos.web;
 
+import com.api.gestion.eventos.dtos.EventoDTO;
 import com.api.gestion.eventos.entities.Evento;
+import com.api.gestion.eventos.mappers.EventoMapper;
 import com.api.gestion.eventos.repositories.EventoRepository;
 import com.api.gestion.eventos.services.EventoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/eventos")
+@CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 public class EventoController {
     @Autowired
     private EventoService eventoService;
@@ -25,10 +28,12 @@ public class EventoController {
         return creado;
     }
 
+    // Cambio: devolver DTO sin la colección de asistencias para evitar referencias circulares
     @GetMapping("/listar")
-    public ResponseEntity<List<Evento>> listar() {
+    public ResponseEntity<List<EventoDTO>> listar() {
         List<Evento> lista = eventoRepository.findAll();
-        return ResponseEntity.ok(lista);
+        List<EventoDTO> dtos = EventoMapper.toDtoList(lista);
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")

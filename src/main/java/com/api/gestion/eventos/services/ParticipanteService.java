@@ -10,4 +10,7 @@ public interface ParticipanteService {
     ParticipanteDto buscarporId (Long id);
     ParticipanteDto actualizar (ParticipanteDto participanteDto);
     void eliminarporId (Long id);
+
+    //Listar participantes por evento
+    List<ParticipanteDto> listarPorEvento(Long eventoId);
 }

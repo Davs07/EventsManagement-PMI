@@ -17,4 +17,8 @@ public interface AsistenciaService {
     Asistencia registrarAsistenciaPorQR(String codigoQr);
     byte[] generarQRParaAsistencia(Long asistenciaId) throws Exception;
 
+    //Metodos para marcar asistencia desde la lista de frontend
+    Asistencia obtenerAsistenciaPorParticipanteYEvento(Long participanteId, Long eventoId);
+    Asistencia actualizarEstadoAsistencia(Long participanteId, Long eventoId, boolean asistio);
+
 }

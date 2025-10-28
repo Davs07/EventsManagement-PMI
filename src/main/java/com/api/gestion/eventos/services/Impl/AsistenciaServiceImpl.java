@@ -114,4 +114,22 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         Asistencia asistencia = obtenerAsistenciaPorId(asistenciaId);
         return qrCodeService.generateQRCodeImage(asistencia.getCodigoQr(), 250, 250);
     }
+
+        //Metodos para marcar asistencia desde la lista de frontend
+
+    @Override
+    public Asistencia obtenerAsistenciaPorParticipanteYEvento(Long participanteId, Long eventoId) {
+        return asistenciaRepository.findByParticipanteIdAndEventoId(participanteId, eventoId)
+                .orElseThrow(() -> new RuntimeException("No se encontró asistencia para este participante en el evento"));
+    }
+
+    @Override
+    public Asistencia actualizarEstadoAsistencia(Long participanteId, Long eventoId, boolean asistio) {
+        Asistencia asistencia = obtenerAsistenciaPorParticipanteYEvento(participanteId, eventoId);
+        asistencia.setAsistio(asistio);
+        if (asistio && asistencia.getHoraIngreso() == null) {
+            asistencia.setHoraIngreso(LocalDateTime.now());
+        }
+        return asistenciaRepository.save(asistencia);
+    }
 }
