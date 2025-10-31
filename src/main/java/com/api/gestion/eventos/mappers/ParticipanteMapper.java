@@ -31,7 +31,7 @@ public class ParticipanteMapper {
         if (participante.getEvidenciaEstudio() != null) {
             dto.setEvidenciaEstudio(Base64.getEncoder().encodeToString(participante.getEvidenciaEstudio()));
         }
-        // LO COMENTE PARA QUE NO APAREZCA LA LISTA AL LISTAR PARTICIPANTES
+        // LO COMENTE PARA QUE NO APAREZCA LA LISTA de asistencias AL LISTAR PARTICIPANTES
         // Convertir asistencias a DTOs (evitando ciclos)
 //        if (participante.getAsistencias() != null) {
 //            dto.setAsistencias(
