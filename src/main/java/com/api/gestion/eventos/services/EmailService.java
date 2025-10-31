@@ -2,13 +2,19 @@ package com.api.gestion.eventos.services;
 
 import com.api.gestion.eventos.config.CalendarUtil;
 import com.api.gestion.eventos.dtos.EnvioRecordatoriosResponse;
+import com.api.gestion.eventos.entities.Asistencia;
+import com.api.gestion.eventos.entities.Evento;
+import com.api.gestion.eventos.entities.InvitacionPresencial;
+import com.api.gestion.eventos.entities.InvitacionVirtual;
 import com.api.gestion.eventos.entities.Participante;
+import com.api.gestion.eventos.repositories.AsistenciaRepository;
 import com.api.gestion.eventos.repositories.ParticipanteRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,6 +33,12 @@ public class EmailService {
     private ParticipanteRepository participanteRepository;
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    private AsistenciaRepository asistenciaRepository;
+
+    @Autowired
+    private QrCodeService qrCodeService;
 
     /**
      * Envía recordatorios a todos los participantes y devuelve un resumen con totales y errores.
@@ -115,6 +127,193 @@ public class EmailService {
         }
         String nombre = (p.getNombres() == null || p.getNombres().isBlank()) ? "sin_nombre" : p.getNombres();
         return "id=" + p.getId() + ", nombre=" + nombre;
+    }
+
+    public void sendInvitacionVirtual(InvitacionVirtual invitacion) throws Exception {
+        List<Participante> participantes = participanteRepository.findAll();
+        String icsPath = CalendarUtil.crearArchivoICS(
+                invitacion.getAsunto(),
+                invitacion.getMensaje(),
+                invitacion.getInicio(),
+                invitacion.getFin(),
+                invitacion.getLugar()
+        );
+        File icsFile = new File(icsPath);
+
+        for (Participante partic : participantes) {
+                try {
+                    MimeMessage mimeMessage = mailSender.createMimeMessage();
+                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+                    helper.setTo(partic.getEmail());
+                    helper.setSubject(invitacion.getAsunto());
+
+                    // Incluir el link de Google Meet en el mensaje
+                    String mensajeConLink = invitacion.getMensaje().replace("{nombre}", partic.getNombres())
+                            + "\n\n🔗 Enlace de reunión: " + invitacion.getGoogleMeetLink();
+                    helper.setText(mensajeConLink, true);
+
+                    if (invitacion.getFlyerPath() != null) {
+                        File flyer = new File(invitacion.getFlyerPath());
+                        if (flyer.exists()) {
+                            helper.addAttachment(flyer.getName(), new FileSystemResource(flyer));
+                        }
+                    }
+
+                    if (icsFile.exists()) {
+                        helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
+                    }
+
+                    mailSender.send(mimeMessage);
+                } catch (Exception e) {
+                    logger.error("Error enviando invitación virtual a {}: {}", partic.getEmail(), e.getMessage(), e);
+                }
+        }
+    }
+
+
+//    public void sendInvitacionPresencial(InvitacionPresencial invitacion) throws Exception {
+//        List<Participante> participantes = participanteRepository.findAll();
+//        String icsPath = CalendarUtil.crearArchivoICS(
+//                invitacion.getAsunto(),
+//                invitacion.getMensaje(),
+//                invitacion.getInicio(),
+//                invitacion.getFin(),
+//                invitacion.getLugar()
+//        );
+//        File icsFile = new File(icsPath);
+//
+//        for (Participante partici : participantes) {
+//                try {
+//                    MimeMessage mimeMessage = mailSender.createMimeMessage();
+//                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+//                    helper.setTo(partici.getEmail());
+//                    helper.setSubject(invitacion.getAsunto());
+//                    helper.setText(invitacion.getMensaje().replace("{nombre}", partici.getNombres()), true);
+//
+//                    // Adjuntar flyer si existe
+//                    if (invitacion.getFlyerPath() != null) {
+//                        File flyer = new File(invitacion.getFlyerPath());
+//                        if (flyer.exists()) {
+//                            helper.addAttachment(flyer.getName(), new FileSystemResource(flyer));
+//                        }
+//                    }
+//
+//                    // Generar QR único por usuario y adjuntarlo usando QrCodeService
+//                    try {
+//                        String attachName = "qr_" + (partici.getId() != null ? partici.getId() : System.currentTimeMillis()) + ".png";
+//                        try {
+//                            String qrPath = qrCodeService.saveQRCodeImageToFile(
+//                                    String.format("ASISTENCIA|ID:%d|EMAIL:%s|EVENTO:%s", partici.getId(), partici.getEmail(), invitacion.getAsunto()),
+//                                    300, 300, attachName
+//                            );
+//                            File qrFile = new File(qrPath);
+//                            if (qrFile.exists()) {
+//                                helper.addAttachment(qrFile.getName(), new FileSystemResource(qrFile));
+//                            } else {
+//                                byte[] qrBytes = qrCodeService.generateQRCodeImage(partici.getId().toString(), 300, 300);
+//                                if (qrBytes != null && qrBytes.length > 0) {
+//                                    helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
+//                                }
+//                            }
+//                        } catch (Exception e2) {
+//                            logger.warn("No se pudo guardar QR en archivo, adjuntando desde bytes: {}", e2.getMessage());
+//                            byte[] qrBytes = qrCodeService.generateQRCodeImage(partici.getId().toString(), 300, 300);
+//                            if (qrBytes != null && qrBytes.length > 0) {
+//                                helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
+//                            }
+//                        }
+//                    } catch (Exception e) {
+//                        logger.error("Error generando/adjuntando QR para {}: {}", formatParticipante(partici), e.getMessage(), e);
+//                    }
+//
+//                    if (icsFile.exists()) {
+//                        helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
+//                    }
+//
+//                    mailSender.send(mimeMessage);
+//                } catch (Exception e) {
+//                    System.err.println("Error enviando invitación presencial a " + partici.getEmail() + ": " + e.getMessage());
+//                }
+//        }
+//    }
+
+    // Sobrecarga: enviar invitación presencial para un evento concreto (usa asistencias)
+    public void sendInvitacionPresencial(InvitacionPresencial invitacion, Evento evento) throws Exception {
+         List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
+         String icsPath = CalendarUtil.crearArchivoICS(
+                 invitacion.getAsunto(),
+                 invitacion.getMensaje(),
+                 invitacion.getInicio(),
+                 invitacion.getFin(),
+                 invitacion.getLugar()
+         );
+         File icsFile = new File(icsPath);
+
+        for (Asistencia asistencia : asistenciasEvento) {
+            try {
+                Participante partici = asistencia.getParticipante();
+                MimeMessage mimeMessage = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+                helper.setTo(partici.getEmail());
+                helper.setSubject(invitacion.getAsunto());
+                helper.setText(invitacion.getMensaje().replace("{nombre}", partici.getNombres()), true);
+
+                // Adjuntar flyer si existe
+                if (invitacion.getFlyerPath() != null) {
+                    File flyer = new File(invitacion.getFlyerPath());
+                    if (flyer.exists()) {
+                        helper.addAttachment(flyer.getName(), new FileSystemResource(flyer));
+                    }
+                }
+
+                // Generar QR único por participante y adjuntarlo
+                try {
+                    String attachName = "qr_" + (partici.getId() != null ? partici.getId() : System.currentTimeMillis()) + ".png";
+
+                    // Contenido que llevaremos al QR (si existe un codigo en la asistencia, lo preferimos)
+                    String qrContent = (asistencia.getCodigoQr() != null && !asistencia.getCodigoQr().isBlank())
+                            ? asistencia.getCodigoQr()
+                            : String.format("ASISTENCIA|ID:%s|EMAIL:%s|EVENTO:%s", (partici.getId() != null ? partici.getId() : "0"), partici.getEmail(), invitacion.getAsunto());
+
+                    String qrPath = null;
+                    try {
+                        // Intentar guardar directamente en archivo usando el servicio (se espera que guarde en uploads/QR)
+                        qrPath = qrCodeService.saveQRCodeImageToFile(qrContent, 250, 250, attachName);
+                    } catch (Exception eSave) {
+                        logger.warn("qrCodeService.saveQRCodeImageToFile falló: {}", eSave.getMessage());
+                    }
+
+                    if (qrPath != null) {
+                        File qrFile = new File(qrPath);
+                        if (qrFile.exists()) {
+                            helper.addAttachment(qrFile.getName(), new FileSystemResource(qrFile));
+                        } else {
+                            // Fallback: generar bytes y adjuntar
+                            byte[] qrBytes = qrCodeService.generateQRCodeImage(qrContent, 250, 250);
+                            if (qrBytes != null && qrBytes.length > 0) {
+                                helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
+                            }
+                        }
+                    } else {
+                        // Si no se generó ruta, adjuntar desde bytes
+                        byte[] qrBytes = qrCodeService.generateQRCodeImage(qrContent, 250, 250);
+                        if (qrBytes != null && qrBytes.length > 0) {
+                            helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error generando/adjuntando QR para {}: {}", formatParticipante(asistencia.getParticipante()), e.getMessage(), e);
+                }
+
+                if (icsFile.exists()) {
+                    helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
+                }
+
+                mailSender.send(mimeMessage);
+            } catch (Exception e) {
+                logger.error("Error enviando invitación presencial a {}: {}", (asistencia.getParticipante() != null ? asistencia.getParticipante().getEmail() : "?"), e.getMessage(), e);
+            }
+        }
     }
 
 }
