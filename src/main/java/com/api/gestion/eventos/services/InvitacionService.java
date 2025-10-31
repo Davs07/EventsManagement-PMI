@@ -11,8 +11,8 @@ public class InvitacionService {
     @Autowired
     private EmailService emailService;
 
-    public void enviarInvitacionesVirtuales(InvitacionVirtual invitacion) throws Exception {
-        emailService.sendInvitacionVirtual(invitacion);
+    public void enviarInvitacionesVirtuales(InvitacionVirtual invitacion, Evento evento) throws Exception {
+        emailService.sendInvitacionVirtual(invitacion, evento);
     }
 
     public void enviarInvitacionesPresenciales(InvitacionPresencial invitacion, Evento evento) throws Exception {

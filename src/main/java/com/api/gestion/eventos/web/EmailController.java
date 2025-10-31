@@ -9,8 +9,10 @@ import com.api.gestion.eventos.services.EmailService;
 import com.api.gestion.eventos.services.InvitacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -23,19 +25,31 @@ public class EmailController {
     private EmailService emailService;
     @Autowired
     private InvitacionService invitacionService;
+    @Autowired
+    private EventoRepository eventoRepository;
 
-    @PostMapping("/recordatorio")
-    public ResponseEntity<EnvioRecordatoriosResponse> enviarRecordatorio(@RequestBody RecordatorioRequest request) {
+    @PostMapping(value = "/recordatorio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EnvioRecordatoriosResponse> enviarRecordatorio(
+            @RequestParam Long eventoId,
+            @RequestParam String asunto,
+            @RequestParam String mensaje,
+            @RequestParam String resumenEvento,
+            @RequestParam String descripcionEvento,
+            @RequestParam String inicio,
+            @RequestParam String fin,
+            @RequestParam String lugar,
+            @RequestPart(value = "flyer", required = false) MultipartFile flyer) {
         try {
             EnvioRecordatoriosResponse resp = emailService.enviarRecordatorio(
-                    request.getAsunto(),
-                    request.getMensaje(),
-                    request.getFlyerPath(),
-                    request.getResumenEvento(),
-                    request.getDescripcionEvento(),
-                    request.getInicio(),
-                    request.getFin(),
-                    request.getLugar()
+                    asunto,
+                    mensaje,
+                    flyer,
+                    resumenEvento,
+                    descripcionEvento,
+                    ZonedDateTime.parse(inicio),
+                    ZonedDateTime.parse(fin),
+                    lugar,
+                    eventoRepository.findById(eventoId).orElse(null)
             );
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
@@ -46,17 +60,14 @@ public class EmailController {
     }
 
     @PostMapping("/virtual")
-    public ResponseEntity<?> enviarInvitacionVirtual(@RequestBody InvitacionVirtual invitacion) {
+    public ResponseEntity<?> enviarInvitacionVirtual(@RequestBody InvitacionVirtual invitacion,  @RequestParam Long eventoId) {
         try {
-            invitacionService.enviarInvitacionesVirtuales(invitacion);
+            invitacionService.enviarInvitacionesVirtuales(invitacion, eventoRepository.findById(eventoId).orElse(null));
             return ResponseEntity.ok("Invitaciones virtuales enviadas exitosamente");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error al enviar invitaciones: " + e.getMessage());
         }
     }
-
-    @Autowired
-    private EventoRepository eventoRepository;
 
     @PostMapping("/presencial")
     public ResponseEntity<?> enviarInvitacionPresencial(@RequestBody InvitacionPresencial invitacion,

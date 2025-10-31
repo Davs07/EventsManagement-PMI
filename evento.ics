@@ -3,12 +3,12 @@ PRODID:-//Eventos Facultad//iCal4j 1.0//ES
 VERSION:2.0
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
-DTSTAMP:20251029T155635Z
-DTSTART:20251101T180000
-DTEND:20251101T200000
-SUMMARY:Link del webinar para el evento
-DESCRIPTION:Hola\,<br>Te invitamos a nuestro webinar exclusivo sobre las últimas tendencias en tecnología.<br>📅 Fecha: 1 de noviembre de 2025<br>🕒 Hora: 18:00 PM<br>🔗 Enlace de reunión adjunto<br>¡No te lo pierdas!<br>Saludos\,<br>El equipo organizador
-LOCATION:Google Meet
-UID:bfaab3e5-daa9-47b1-9091-28c751bd7457
+DTSTAMP:20251031T213044Z
+DTSTART:20251120T100000
+DTEND:20251120T120000
+SUMMARY:Evento Importante
+DESCRIPTION:Descripción del evento
+LOCATION:Colegio de Ingenieros Trujillo
+UID:4030e51d-86c1-4e0a-b4cf-0240a47ad475
 END:VEVENT
 END:VCALENDAR

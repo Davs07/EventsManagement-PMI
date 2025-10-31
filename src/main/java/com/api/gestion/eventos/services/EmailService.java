@@ -8,7 +8,6 @@ import com.api.gestion.eventos.entities.InvitacionPresencial;
 import com.api.gestion.eventos.entities.InvitacionVirtual;
 import com.api.gestion.eventos.entities.Participante;
 import com.api.gestion.eventos.repositories.AsistenciaRepository;
-import com.api.gestion.eventos.repositories.ParticipanteRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -19,8 +18,10 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +30,6 @@ import java.util.List;
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    @Autowired
-    private ParticipanteRepository participanteRepository;
     @Autowired
     private JavaMailSender mailSender;
 
@@ -42,37 +41,35 @@ public class EmailService {
 
     /**
      * Envía recordatorios a todos los participantes y devuelve un resumen con totales y errores.
+     * Ahora recibe el `flyerFile` como MultipartFile (subido desde Postman) y lo adjunta en memoria.
      */
-    public EnvioRecordatoriosResponse enviarRecordatorio(String asunto, String mensaje, String flyerPath,
+    public EnvioRecordatoriosResponse enviarRecordatorio(String asunto, String mensaje, MultipartFile flyerFile,
                                                          String resumenEvento, String descripcionEvento,
-                                                         ZonedDateTime inicio, ZonedDateTime fin, String lugar) {
-        List<Participante> participantes = participanteRepository.findAll();
+                                                         ZonedDateTime inicio, ZonedDateTime fin, String lugar,
+                                                         Evento evento) {
+        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
         String icsPath;
         try {
             icsPath = CalendarUtil.crearArchivoICS(resumenEvento, descripcionEvento, inicio, fin, lugar);
         } catch (Exception e) {
-            // No detener envío por fallo al generar .ics; registrar error y seguir sin archivo .ics
             logger.error("Error generando ICS: {}", e.getMessage(), e);
             icsPath = null;
         }
 
         File icsFile = (icsPath != null) ? new File(icsPath) : null;
-        File flyer = null;
-        if (flyerPath != null && !flyerPath.isBlank()) {
-            flyer = new File(flyerPath);
-        }
 
-        int total = participantes.size();
+        int total = asistenciasEvento.size();
         int enviados = 0;
         int fallidos = 0;
         List<String> errores = new ArrayList<>();
 
-        for (Participante participante : participantes) {
-            String targetEmail = participante.getEmail();
-            String nombreParticipante = participante.getNombres();
+        for (Asistencia asistencia : asistenciasEvento) {
+            Participante partici = asistencia.getParticipante();
+            String targetEmail = partici != null ? partici.getEmail() : null;
+            String nombreParticipante = partici != null ? partici.getNombres() : null;
 
             if (targetEmail == null || targetEmail.isBlank()) {
-                String idLabel = formatParticipante(participante);
+                String idLabel = formatParticipante(partici);
                 logger.error("Participante sin email: {}", idLabel);
                 errores.add(idLabel);
                 fallidos++;
@@ -88,9 +85,10 @@ public class EmailService {
                 String cuerpo = (mensaje != null) ? mensaje.replace("{nombre}", nombreParticipante != null ? nombreParticipante : "") : "";
                 helper.setText(cuerpo, true);
 
-                // Adjuntar flyer si fue proporcionado y existe
-                attachIfExists(helper, flyer);
+                // Adjuntar flyer si fue proporcionado (MultipartFile)
+                attachMultipartIfExists(helper, flyerFile);
 
+                // Adjuntar .ics si se generó
                 if (icsFile != null && icsFile.exists()) {
                     helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
                 }
@@ -99,7 +97,7 @@ public class EmailService {
                 enviados++;
             } catch (Exception e) {
                 // Registrar la excepción en logs, pero sólo añadir el participante en la lista de errores
-                String idLabel = formatParticipante(participante);
+                String idLabel = formatParticipante(partici);
                 logger.error("Error enviando correo a {}: {}", idLabel, e.getMessage(), e);
                 errores.add(idLabel);
                 fallidos++;
@@ -107,6 +105,21 @@ public class EmailService {
         }
 
         return new EnvioRecordatoriosResponse(total, enviados, fallidos, errores);
+    }
+
+    private void attachMultipartIfExists(MimeMessageHelper helper, MultipartFile file) {
+        if (file == null || file.isEmpty()) return;
+        try {
+            String name = (file.getOriginalFilename() != null && !file.getOriginalFilename().isBlank())
+                    ? file.getOriginalFilename()
+                    : "adjunto";
+            byte[] bytes = file.getBytes();
+            if (bytes != null && bytes.length > 0) {
+                helper.addAttachment(name, new ByteArrayResource(bytes));
+            }
+        } catch (MessagingException | IOException e) {
+            logger.error("Error adjuntando MultipartFile {}: {}", (file != null ? file.getOriginalFilename() : "(null)"), e.getMessage(), e);
+        }
     }
 
     private void attachIfExists(MimeMessageHelper helper, File file) {
@@ -129,8 +142,9 @@ public class EmailService {
         return "id=" + p.getId() + ", nombre=" + nombre;
     }
 
-    public void sendInvitacionVirtual(InvitacionVirtual invitacion) throws Exception {
-        List<Participante> participantes = participanteRepository.findAll();
+    public void sendInvitacionVirtual(InvitacionVirtual invitacion, Evento evento) throws Exception {
+        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
+
         String icsPath = CalendarUtil.crearArchivoICS(
                 invitacion.getAsunto(),
                 invitacion.getMensaje(),
@@ -140,15 +154,16 @@ public class EmailService {
         );
         File icsFile = new File(icsPath);
 
-        for (Participante partic : participantes) {
+        for (Asistencia asistencia : asistenciasEvento) {
                 try {
                     MimeMessage mimeMessage = mailSender.createMimeMessage();
                     MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-                    helper.setTo(partic.getEmail());
+                    Participante partici = asistencia.getParticipante();
+                    helper.setTo(partici.getEmail());
                     helper.setSubject(invitacion.getAsunto());
 
                     // Incluir el link de Google Meet en el mensaje
-                    String mensajeConLink = invitacion.getMensaje().replace("{nombre}", partic.getNombres())
+                    String mensajeConLink = invitacion.getMensaje().replace("{nombre}", partici.getNombres())
                             + "\n\n🔗 Enlace de reunión: " + invitacion.getGoogleMeetLink();
                     helper.setText(mensajeConLink, true);
 
@@ -165,77 +180,11 @@ public class EmailService {
 
                     mailSender.send(mimeMessage);
                 } catch (Exception e) {
-                    logger.error("Error enviando invitación virtual a {}: {}", partic.getEmail(), e.getMessage(), e);
+                    logger.error("Error enviando invitación virtual a {}: {}",
+                            formatParticipante(asistencia.getParticipante()), e.getMessage(), e);
                 }
         }
     }
-
-
-//    public void sendInvitacionPresencial(InvitacionPresencial invitacion) throws Exception {
-//        List<Participante> participantes = participanteRepository.findAll();
-//        String icsPath = CalendarUtil.crearArchivoICS(
-//                invitacion.getAsunto(),
-//                invitacion.getMensaje(),
-//                invitacion.getInicio(),
-//                invitacion.getFin(),
-//                invitacion.getLugar()
-//        );
-//        File icsFile = new File(icsPath);
-//
-//        for (Participante partici : participantes) {
-//                try {
-//                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-//                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-//                    helper.setTo(partici.getEmail());
-//                    helper.setSubject(invitacion.getAsunto());
-//                    helper.setText(invitacion.getMensaje().replace("{nombre}", partici.getNombres()), true);
-//
-//                    // Adjuntar flyer si existe
-//                    if (invitacion.getFlyerPath() != null) {
-//                        File flyer = new File(invitacion.getFlyerPath());
-//                        if (flyer.exists()) {
-//                            helper.addAttachment(flyer.getName(), new FileSystemResource(flyer));
-//                        }
-//                    }
-//
-//                    // Generar QR único por usuario y adjuntarlo usando QrCodeService
-//                    try {
-//                        String attachName = "qr_" + (partici.getId() != null ? partici.getId() : System.currentTimeMillis()) + ".png";
-//                        try {
-//                            String qrPath = qrCodeService.saveQRCodeImageToFile(
-//                                    String.format("ASISTENCIA|ID:%d|EMAIL:%s|EVENTO:%s", partici.getId(), partici.getEmail(), invitacion.getAsunto()),
-//                                    300, 300, attachName
-//                            );
-//                            File qrFile = new File(qrPath);
-//                            if (qrFile.exists()) {
-//                                helper.addAttachment(qrFile.getName(), new FileSystemResource(qrFile));
-//                            } else {
-//                                byte[] qrBytes = qrCodeService.generateQRCodeImage(partici.getId().toString(), 300, 300);
-//                                if (qrBytes != null && qrBytes.length > 0) {
-//                                    helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
-//                                }
-//                            }
-//                        } catch (Exception e2) {
-//                            logger.warn("No se pudo guardar QR en archivo, adjuntando desde bytes: {}", e2.getMessage());
-//                            byte[] qrBytes = qrCodeService.generateQRCodeImage(partici.getId().toString(), 300, 300);
-//                            if (qrBytes != null && qrBytes.length > 0) {
-//                                helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
-//                            }
-//                        }
-//                    } catch (Exception e) {
-//                        logger.error("Error generando/adjuntando QR para {}: {}", formatParticipante(partici), e.getMessage(), e);
-//                    }
-//
-//                    if (icsFile.exists()) {
-//                        helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
-//                    }
-//
-//                    mailSender.send(mimeMessage);
-//                } catch (Exception e) {
-//                    System.err.println("Error enviando invitación presencial a " + partici.getEmail() + ": " + e.getMessage());
-//                }
-//        }
-//    }
 
     // Sobrecarga: enviar invitación presencial para un evento concreto (usa asistencias)
     public void sendInvitacionPresencial(InvitacionPresencial invitacion, Evento evento) throws Exception {
