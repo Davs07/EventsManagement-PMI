@@ -3,12 +3,12 @@ PRODID:-//Eventos Facultad//iCal4j 1.0//ES
 VERSION:2.0
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
-DTSTAMP:20251031T213044Z
-DTSTART:20251120T100000
-DTEND:20251120T120000
-SUMMARY:Evento Importante
-DESCRIPTION:Descripción del evento
-LOCATION:Colegio de Ingenieros Trujillo
-UID:4030e51d-86c1-4e0a-b4cf-0240a47ad475
+DTSTAMP:20251102T133104Z
+DTSTART:20251110T082500
+DTEND:20251111T082500
+SUMMARY:Invitación Presencial: Otro Congreso
+DESCRIPTION:Hola {nombre}\,\n\nEstás invitado al evento presencial \"Otro Congreso\".\n\nTu código QR de entrada va adjunto.
+LOCATION:Lima
+UID:3d7d4cb8-dfe7-4fb3-90c4-559cf877e23d
 END:VEVENT
 END:VCALENDAR

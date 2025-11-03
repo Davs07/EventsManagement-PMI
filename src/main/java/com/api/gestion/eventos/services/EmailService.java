@@ -222,7 +222,7 @@ public class EmailService {
                     // Contenido que llevaremos al QR (si existe un codigo en la asistencia, lo preferimos)
                     String qrContent = (asistencia.getCodigoQr() != null && !asistencia.getCodigoQr().isBlank())
                             ? asistencia.getCodigoQr()
-                            : String.format("ASISTENCIA|ID:%s|EMAIL:%s|EVENTO:%s", (partici.getId() != null ? partici.getId() : "0"), partici.getEmail(), invitacion.getAsunto());
+                            : String.format("DEFAULT: ASISTENCIA|ID:%s|EMAIL:%s|EVENTO:%s", (partici.getId() != null ? partici.getId() : "0"), partici.getEmail(), invitacion.getAsunto());
 
                     String qrPath = null;
                     try {
