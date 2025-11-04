@@ -34,15 +34,18 @@ Si Render no permite Docker, usa:
 
 **Build Command:**
 ```bash
-./mvnw clean install -DskipTests
+# Render soporta máximo Java 21
+./mvnw clean package -Pproduction -DskipTests
 ```
 
 **Start Command:**
 ```bash
-java -Dserver.port=$PORT -jar target/*.jar
+java -Dserver.port=$PORT -Dspring.profiles.active=production -jar target/*.jar
 ```
 
 **Root Directory:** `Gestion_Eventos` (si el proyecto está en subdirectorio)
+
+> **IMPORTANTE:** El proyecto está configurado para compilar con Java 21 en producción (perfil `production`). Render y la mayoría de PaaS soportan hasta Java 21. Si usas Docker, el Dockerfile ya usa Java 21.
 
 ---
 
