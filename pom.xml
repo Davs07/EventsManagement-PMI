@@ -28,7 +28,38 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
 	</properties>
+	
+	<profiles>
+		<!-- Perfil para desarrollo local con Java 25 -->
+		<profile>
+			<id>dev</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<java.version>25</java.version>
+				<maven.compiler.source>25</maven.compiler.source>
+				<maven.compiler.target>25</maven.compiler.target>
+			</properties>
+		</profile>
+		
+		<!-- Perfil para producción con Java 21 -->
+		<profile>
+			<id>production</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<java.version>21</java.version>
+				<maven.compiler.source>21</maven.compiler.source>
+				<maven.compiler.target>21</maven.compiler.target>
+			</properties>
+		</profile>
+	</profiles>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -64,17 +95,18 @@
 			<artifactId>poi</artifactId>
 			<version>5.2.5</version>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.5</version>
 		</dependency>
-        <dependency>
+		
+        <dependency>		
             <groupId>org.mnode.ical4j</groupId>
             <artifactId>ical4j</artifactId>
             <version>3.2.5</version>
-        </dependency>
+        </dependency>	
 		<!-- Para Mail-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -99,6 +131,11 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<!-- Use the java.version property to set the release level.
+						 This ensures the produced bytecode is compatible with the
+						 Java runtime indicated by the active profile (production=21).
+					-->
+					<release>${java.version}</release>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
@@ -106,6 +143,34 @@
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
+			</plugin>
+
+			<!-- Enforce a minimum Java version during the build (helps catch misconfigured CI)
+				 This rule requires Java 21 or higher to build. Local development can still
+				 use the 'dev' profile if desired (which sets properties for Java 25).
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<id>enforce-java</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireJavaVersion>
+									<!-- minimum 21; builds on newer JDKs (e.g. 25) will also pass -->
+									<version>[21,)</version>
+									<message>Se requiere JDK 21+ para el build de producción. Use el perfil 'dev' para JDK 25 en desarrollo local si es necesario.</message>
+								</requireJavaVersion>
+							</rules>
+							<fail>true</fail>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
