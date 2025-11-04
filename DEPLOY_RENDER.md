@@ -113,11 +113,56 @@ mysql://avnadmin:PASSWORD@em-pmi-db-davs.k.aivencloud.com:16969/defaultdb?ssl-mo
 
 ---
 
+## 📦 Build Local para Producción
+
+### Windows (cmd / PowerShell)
+
+**Usando Maven Wrapper (recomendado):**
+```bash
+# PowerShell
+& '.\Gestion_Eventos\mvnw.cmd' -f '.\Gestion_Eventos\pom.xml' -Pproduction -DskipTests package
+
+# CMD
+.\Gestion_Eventos\mvnw.cmd -f .\Gestion_Eventos\pom.xml -Pproduction -DskipTests package
+```
+
+**Usando Maven instalado:**
+```bash
+mvn -f Gestion_Eventos\pom.xml -Pproduction -DskipTests package
+```
+
+El JAR compilado estará en: `Gestion_Eventos/target/api.gestion.eventos-0.0.1-SNAPSHOT.jar`
+
+### Linux / macOS
+
+```bash
+./Gestion_Eventos/mvnw -f Gestion_Eventos/pom.xml -Pproduction -DskipTests package
+```
+
+### Configuración de Java
+
+El proyecto utiliza **perfiles de Maven** para manejar diferentes versiones de Java:
+
+- **Perfil `production`** (activo por defecto): Compila con **Java 21**
+  - Compatible con Render, Railway, y la mayoría de plataformas cloud
+  - El `Dockerfile` usa Eclipse Temurin JRE 21
+  - El `maven-enforcer-plugin` valida que el build use JDK 21+
+
+- **Perfil `dev`** (desarrollo local): Compila con **Java 25**
+  - Actívalo con: `mvnw.cmd -Pdev clean install`
+  - Solo para desarrollo local si tienes JDK 25 instalado
+
+**Nota:** El perfil `production` garantiza compatibilidad con plataformas cloud que solo soportan Java 21.
+
+---
+
 ## Problemas Comunes
 
 ### Error: Java version incompatible
-- Verifica que Render soporte Java 21+
-- Considera bajar la versión en `pom.xml` si es necesario
+- ✅ **Solución:** El proyecto ya está configurado para compilar con Java 21 en producción
+- El perfil `production` está activo por defecto
+- Render/Railway usan el `Dockerfile` que tiene JRE 21 (Eclipse Temurin)
+- Si compilas localmente con JDK 25, el artefacto será compatible con JRE 21 gracias a `<release>21</release>`
 
 ### Error: mvnw permission denied
 ```bash
