@@ -6,11 +6,19 @@ spring.application.name=api.gestion.eventos
 # ============================================
 # CONFIGURACIÓN DE BASE DE DATOS
 # ============================================
-# MySQL Database Configuration
+# MySQL Database Configuration (Localhost - Desarrollo)
 spring.datasource.url=jdbc:mysql://localhost:3306/bd_gestion_eventos?createDatabaseIfNotExist=true
 spring.datasource.username=root
 spring.datasource.password=admin
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# ALTERNATIVA: Aiven MySQL (Producción)
+# spring.datasource.url=jdbc:mysql://em-pmi-db-davs.k.aivencloud.com:16969/defaultdb?ssl-mode=REQUIRED
+# spring.datasource.username=avnadmin
+# spring.datasource.password=TU_PASSWORD_AIVEN
+# spring.datasource.hikari.connection-test-query=SELECT 1
+# spring.datasource.hikari.maximum-pool-size=5
+# spring.datasource.hikari.minimum-idle=2
 
 # ============================================
 # CONFIGURACIÓN DE JPA/HIBERNATE

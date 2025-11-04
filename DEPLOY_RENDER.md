@@ -52,36 +52,64 @@ Agrega estas variables en Render Dashboard → Environment:
 
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
-| `DATABASE_URL` | URL de MySQL | `jdbc:mysql://host:3306/db` |
-| `DB_USERNAME` | Usuario MySQL | `root` |
-| `DB_PASSWORD` | Contraseña MySQL | `password` |
+| `SPRING_PROFILES_ACTIVE` | Perfil activo | `production` |
+| `AIVEN_DB_PASSWORD` | Password de Aiven | `(obtener de Aiven Console)` |
 | `MAIL_USERNAME` | Email Gmail | `correo@gmail.com` |
 | `MAIL_PASSWORD` | App Password | `xxxx xxxx xxxx xxxx` |
-| `SPRING_PROFILES_ACTIVE` | Perfil activo | `production` |
 | `PORT` | Puerto (automático) | `8080` |
 
+### Variables Opcionales (con valores por defecto):
+
+| Variable | Valor por Defecto |
+|----------|-------------------|
+| `AIVEN_DATABASE_URL` | `jdbc:mysql://em-pmi-db-davs.k.aivencloud.com:16969/defaultdb?ssl-mode=REQUIRED` |
+| `AIVEN_DB_USERNAME` | `avnadmin` |
+
+### Base de Datos Aiven
+
+✅ **Base de datos:** MySQL en Aiven Cloud
+- Host: `em-pmi-db-davs.k.aivencloud.com:16969`
+- Database: `defaultdb`
+- User: `avnadmin`
+- SSL: Requerido
+
 ---
 
-## Base de Datos en Render
+## 🔗 URLs después del deploy
 
-### Crear MySQL Database:
+- Backend API: `https://eventsmanagement-pmi.onrender.com/api`
+- Health Check: `https://eventsmanagement-pmi.onrender.com/actuator/health` (si tienes Actuator)
 
-1. En Render: **New** → **MySQL**
-2. Name: `eventsmanagement-db`
-3. User: `admin`
-4. Copia las credenciales generadas
-5. Úsalas en las variables de entorno del backend
+Actualiza `NEXT_PUBLIC_API_URL` en el frontend con la URL del backend.
 
 ---
 
-## Health Check
+## 📊 Información de la Base de Datos Aiven
 
-Render verificará la salud del servicio en:
+**Servicio:** MySQL en Aiven Cloud
 ```
-/actuator/health
+Host: em-pmi-db-davs.k.aivencloud.com
+Port: 16969
+Database: defaultdb
+User: avnadmin
+Password: (configurar en variable AIVEN_DB_PASSWORD)
+SSL Mode: REQUIRED
 ```
 
-Asegúrate de que Spring Boot Actuator esté configurado.
+**Service URI Format:**
+```
+mysql://avnadmin:PASSWORD@em-pmi-db-davs.k.aivencloud.com:16969/defaultdb?ssl-mode=REQUIRED
+```
+
+**Características:**
+- ✅ SSL/TLS automático
+- ✅ Backups automáticos
+- ✅ Alta disponibilidad
+- ✅ Connection pooling configurado (max 5 conexiones)
+
+**Acceso al Dashboard:**
+- Panel Aiven: https://console.aiven.io/
+- Monitoreo de métricas y logs disponibles
 
 ---
 
