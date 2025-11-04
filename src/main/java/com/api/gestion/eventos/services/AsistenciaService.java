@@ -1,6 +1,9 @@
 package com.api.gestion.eventos.services;
 
+import com.api.gestion.eventos.dtos.AsistenciaDTO;
 import com.api.gestion.eventos.entities.Asistencia;
+import com.api.gestion.eventos.entities.Evento;
+import com.api.gestion.eventos.entities.Participante;
 
 import java.util.List;
 
@@ -20,5 +23,9 @@ public interface AsistenciaService {
     //Metodos para marcar asistencia desde la lista de frontend
     Asistencia obtenerAsistenciaPorParticipanteYEvento(Long participanteId, Long eventoId);
     Asistencia actualizarEstadoAsistencia(Long participanteId, Long eventoId, boolean asistio);
+
+    //Paull Mío esto no se toca -.-
+    Asistencia crearAsistencia(Participante participante, Evento evento);
+    void borrarAsistencia(AsistenciaDTO asistenciaDto);
 
 }

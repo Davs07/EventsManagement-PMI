@@ -4,11 +4,16 @@ import com.api.gestion.eventos.dtos.AsistenciaDTO;
 import com.api.gestion.eventos.entities.Asistencia;
 import com.api.gestion.eventos.entities.Evento;
 import com.api.gestion.eventos.entities.Participante;
+import com.api.gestion.eventos.enums.RolParticipante;
+import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Service
 public class AsistenciaMapper {
 
     public static AsistenciaDTO toDto(Asistencia a) {
@@ -51,9 +56,15 @@ public class AsistenciaMapper {
             e.setId(dto.getEventoId());
             a.setEvento(e);
         }
-        // rol se maneja por nombre del enum en servicio si es necesario
-        // aquí no parseamos el enum para dejar que el servicio/validaciones lo manejen
-        // pero si se desea, se puede parsear con RolParticipante.valueOf(...)
+        // Parsear el rol del DTO si viene, validando que sea un valor válido del enum
+        if (dto.getRol() != null && !dto.getRol().isEmpty()) {
+            try {
+                a.setRol(RolParticipante.valueOf(dto.getRol().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Si el rol no es válido, se dejará null para que el servicio lo maneje
+                a.setRol(null);
+            }
+        }
         a.setHoraIngreso(dto.getHoraIngreso());
         a.setObservaciones(dto.getObservaciones());
         a.setAsistio(dto.getAsistio() != null ? dto.getAsistio() : false);
@@ -66,5 +77,20 @@ public class AsistenciaMapper {
 
     public static List<AsistenciaDTO> toDtoList(List<Asistencia> list) {
         return list.stream().map(AsistenciaMapper::toDto).collect(Collectors.toList());
+    }
+
+    public static Asistencia crearAsistencia(Participante participante, Evento evento) {
+        if (participante == null || evento == null) {
+            return null;
+        }
+
+        return Asistencia.builder()
+                .participante(participante)
+                .evento(evento)
+                .rol(RolParticipante.ASISTENTE)
+                .fechaRegistro(LocalDateTime.now())
+                .asistio(false)
+                .codigoQr(UUID.randomUUID().toString())
+                .build();
     }
 }

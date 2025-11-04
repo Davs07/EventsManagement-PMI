@@ -26,11 +26,8 @@ public class ParticipanteMapper {
         dto.setCapituloPmi(participante.getCapituloPmi());
         dto.setIdMiembroPmi(participante.getIdMiembroPmi());
         dto.setCuentaConCertificadoPmi(participante.isCuentaConCertificadoPmi());
+        dto.setEvidenciaEstudio(participante.getEvidenciaEstudio());
 
-        // Convertir byte[] a Base64
-        if (participante.getEvidenciaEstudio() != null) {
-            dto.setEvidenciaEstudio(Base64.getEncoder().encodeToString(participante.getEvidenciaEstudio()));
-        }
         // LO COMENTE PARA QUE NO APAREZCA LA LISTA de asistencias AL LISTAR PARTICIPANTES
         // Convertir asistencias a DTOs (evitando ciclos)
 //        if (participante.getAsistencias() != null) {
@@ -61,11 +58,8 @@ public class ParticipanteMapper {
         participante.setCapituloPmi(dto.getCapituloPmi());
         participante.setIdMiembroPmi(dto.getIdMiembroPmi());
         participante.setCuentaConCertificadoPmi(dto.getCuentaConCertificadoPmi() != null ? dto.getCuentaConCertificadoPmi() : false);
+        participante.setEvidenciaEstudio(dto.getEvidenciaEstudio());
 
-        // Convertir Base64 a byte[]
-        if (dto.getEvidenciaEstudio() != null && !dto.getEvidenciaEstudio().isEmpty()) {
-            participante.setEvidenciaEstudio(Base64.getDecoder().decode(dto.getEvidenciaEstudio()));
-        }
 
         // No mapear asistencias aquí para evitar ciclos al crear
 

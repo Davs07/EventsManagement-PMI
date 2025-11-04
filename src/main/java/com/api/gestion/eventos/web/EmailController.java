@@ -1,14 +1,12 @@
 package com.api.gestion.eventos.web;
 
 import com.api.gestion.eventos.dtos.EnvioRecordatoriosResponse;
-import com.api.gestion.eventos.dtos.RecordatorioRequest;
 import com.api.gestion.eventos.entities.InvitacionPresencial;
 import com.api.gestion.eventos.entities.InvitacionVirtual;
 import com.api.gestion.eventos.repositories.EventoRepository;
 import com.api.gestion.eventos.services.EmailService;
 import com.api.gestion.eventos.services.InvitacionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -59,25 +57,62 @@ public class EmailController {
         }
     }
 
-    @PostMapping("/virtual")
-    public ResponseEntity<?> enviarInvitacionVirtual(@RequestBody InvitacionVirtual invitacion,  @RequestParam Long eventoId) {
+    @PostMapping(value = "/virtual", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> enviarInvitacionVirtual(
+            @RequestParam Long eventoId,
+            @RequestParam String asunto,
+            @RequestParam String mensaje,
+            @RequestParam String googleMeetLink,
+            @RequestParam String inicio,
+            @RequestParam String fin,
+            @RequestParam String lugar,
+            @RequestPart(value = "flyer", required = false) MultipartFile flyer) {
         try {
-            invitacionService.enviarInvitacionesVirtuales(invitacion, eventoRepository.findById(eventoId).orElse(null));
+            InvitacionVirtual invitacion = new InvitacionVirtual();
+            invitacion.setAsunto(asunto);
+            invitacion.setMensaje(mensaje);
+            invitacion.setGoogleMeetLink(googleMeetLink);
+            invitacion.setInicio(ZonedDateTime.parse(inicio));
+            invitacion.setFin(ZonedDateTime.parse(fin));
+            invitacion.setLugar(lugar);
+
+            invitacionService.enviarInvitacionesVirtuales(
+                    invitacion,
+                    eventoRepository.findById(eventoId).orElse(null),
+                    flyer);
             return ResponseEntity.ok("Invitaciones virtuales enviadas exitosamente");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error al enviar invitaciones: " + e.getMessage());
         }
     }
 
-    @PostMapping("/presencial")
-    public ResponseEntity<?> enviarInvitacionPresencial(@RequestBody InvitacionPresencial invitacion,
-                                                         @RequestParam Long eventoId) {
+    @PostMapping(value = "/presencial", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> enviarInvitacionPresencial(
+            @RequestParam Long eventoId,
+            @RequestParam String asunto,
+            @RequestParam String mensaje,
+            //@RequestParam String qrCode,
+            @RequestParam String inicio,
+            @RequestParam String fin,
+            @RequestParam String lugar,
+            @RequestPart(value = "flyer", required = false) MultipartFile flyer) {
         try {
+            InvitacionPresencial invitacion = new InvitacionPresencial();
+            invitacion.setAsunto(asunto);
+            invitacion.setMensaje(mensaje);
+            //invitacion.setQrCode(qrCode);
+            invitacion.setInicio(ZonedDateTime.parse(inicio));
+            invitacion.setFin(ZonedDateTime.parse(fin));
+            invitacion.setLugar(lugar);
 
-            invitacionService.enviarInvitacionesPresenciales(invitacion, eventoRepository.findById(eventoId).orElse(null));
+            invitacionService.enviarInvitacionesPresenciales(
+                    invitacion,
+                    eventoRepository.findById(eventoId).orElse(null),
+                    flyer);
+
             return ResponseEntity.ok("Invitaciones presenciales enviadas exitosamente");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error al enviar invitaciones: " + e.getMessage());
-        }
-    }
+ }
+}
 }

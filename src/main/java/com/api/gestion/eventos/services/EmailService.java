@@ -41,7 +41,7 @@ public class EmailService {
 
     /**
      * Envía recordatorios a todos los participantes y devuelve un resumen con totales y errores.
-     * Ahora recibe el `flyerFile` como MultipartFile (subido desde Postman) y lo adjunta en memoria.
+     * Ahora recibe el flyerFile como MultipartFile (subido desde Postman) y lo lo incrusta inline en el correo.
      */
     public EnvioRecordatoriosResponse enviarRecordatorio(String asunto, String mensaje, MultipartFile flyerFile,
                                                          String resumenEvento, String descripcionEvento,
@@ -83,10 +83,47 @@ public class EmailService {
                 helper.setSubject(asunto);
                 // Reemplazar marcador {nombre} en el mensaje si existe
                 String cuerpo = (mensaje != null) ? mensaje.replace("{nombre}", nombreParticipante != null ? nombreParticipante : "") : "";
-                helper.setText(cuerpo, true);
 
-                // Adjuntar flyer si fue proporcionado (MultipartFile)
-                attachMultipartIfExists(helper, flyerFile);
+                // Construir HTML del correo; si hay flyer, incrustarlo como imagen inline usando CID
+                StringBuilder html = new StringBuilder();
+                String flyerCid = null;
+                if (flyerFile != null && !flyerFile.isEmpty()) {
+                    flyerCid = "flyer" + System.currentTimeMillis();
+                    html.append("<p><img src=\"cid:").append(flyerCid).append("\" style=\"max-width:80vw;height:auto;\"/></p>");
+                }
+                html.append("<html><body>");
+                html.append("<p>").append(cuerpo.replace("\n", "<br/>")).append("</p>");
+                html.append("<p><strong>Evento:</strong> ").append(resumenEvento != null ? resumenEvento : "").append("</p>");
+                html.append("<p><strong>Fecha:</strong> ").append(inicio != null ? inicio.toString() : "").append(" - ").append(fin != null ? fin.toString() : "").append("</p>");
+                html.append("<p><strong>Lugar:</strong> ").append(lugar != null ? lugar : "").append("</p>");
+
+
+                html.append("</body></html>");
+                helper.setText(html.toString(), true);
+
+                // Si hay flyer, añadir como recurso inline (si es imagen) o como adjunto si no lo es
+                if (flyerFile != null && !flyerFile.isEmpty()) {
+                    try {
+                        byte[] bytes = flyerFile.getBytes();
+                        if (bytes.length > 0) {
+                            String contentType = flyerFile.getContentType() != null ? flyerFile.getContentType() : "application/octet-stream";
+                            String originalName = (flyerFile.getOriginalFilename() != null && !flyerFile.getOriginalFilename().isBlank())
+                                    ? flyerFile.getOriginalFilename()
+                                    : "flyer";
+
+                            if (contentType.startsWith("image/")) {
+                                if (flyerCid == null) flyerCid = "flyer" + System.currentTimeMillis();
+                                // insertar inline
+                                helper.addInline(flyerCid, new ByteArrayResource(bytes), contentType);
+                            } else {
+                                // adjuntar como archivo si no es imagen (ej: PDF)
+                                helper.addAttachment(originalName, new ByteArrayResource(bytes), contentType);
+                            }
+                        }
+                    } catch (IOException | MessagingException e) {
+                        logger.error("Error añadiendo flyer para {}: {}", formatParticipante(partici), e.getMessage(), e);
+                    }
+                }
 
                 // Adjuntar .ics si se generó
                 if (icsFile != null && icsFile.exists()) {
@@ -107,30 +144,6 @@ public class EmailService {
         return new EnvioRecordatoriosResponse(total, enviados, fallidos, errores);
     }
 
-    private void attachMultipartIfExists(MimeMessageHelper helper, MultipartFile file) {
-        if (file == null || file.isEmpty()) return;
-        try {
-            String name = (file.getOriginalFilename() != null && !file.getOriginalFilename().isBlank())
-                    ? file.getOriginalFilename()
-                    : "adjunto";
-            byte[] bytes = file.getBytes();
-            if (bytes != null && bytes.length > 0) {
-                helper.addAttachment(name, new ByteArrayResource(bytes));
-            }
-        } catch (MessagingException | IOException e) {
-            logger.error("Error adjuntando MultipartFile {}: {}", (file != null ? file.getOriginalFilename() : "(null)"), e.getMessage(), e);
-        }
-    }
-
-    private void attachIfExists(MimeMessageHelper helper, File file) {
-        if (file != null && file.exists()) {
-            try {
-                helper.addAttachment(file.getName(), new FileSystemResource(file));
-            } catch (MessagingException e) {
-                logger.error("Error adjuntando archivo {}: {}", file.getName(), e.getMessage(), e);
-            }
-        }
-    }
 
     private String formatParticipante(Participante p) {
         if (p == null) return "participante_desconocido";
@@ -142,7 +155,7 @@ public class EmailService {
         return "id=" + p.getId() + ", nombre=" + nombre;
     }
 
-    public void sendInvitacionVirtual(InvitacionVirtual invitacion, Evento evento) throws Exception {
+    public void sendInvitacionVirtual(InvitacionVirtual invitacion, Evento evento, MultipartFile flyer) throws Exception {
         List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
 
         String icsPath = CalendarUtil.crearArchivoICS(
@@ -152,81 +165,126 @@ public class EmailService {
                 invitacion.getFin(),
                 invitacion.getLugar()
         );
-        File icsFile = new File(icsPath);
+        File icsFile = (icsPath != null) ? new File(icsPath) : null;
 
         for (Asistencia asistencia : asistenciasEvento) {
-                try {
-                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-                    Participante partici = asistencia.getParticipante();
-                    helper.setTo(partici.getEmail());
-                    helper.setSubject(invitacion.getAsunto());
+            try {
+                MimeMessage mimeMessage = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                Participante partici = asistencia.getParticipante();
+                helper.setTo(partici.getEmail());
+                helper.setSubject(invitacion.getAsunto());
 
-                    // Incluir el link de Google Meet en el mensaje
-                    String mensajeConLink = invitacion.getMensaje().replace("{nombre}", partici.getNombres())
-                            + "\n\n🔗 Enlace de reunión: " + invitacion.getGoogleMeetLink();
-                    helper.setText(mensajeConLink, true);
-
-                    if (invitacion.getFlyerPath() != null) {
-                        File flyer = new File(invitacion.getFlyerPath());
-                        if (flyer.exists()) {
-                            helper.addAttachment(flyer.getName(), new FileSystemResource(flyer));
-                        }
-                    }
-
-                    if (icsFile.exists()) {
-                        helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
-                    }
-
-                    mailSender.send(mimeMessage);
-                } catch (Exception e) {
-                    logger.error("Error enviando invitación virtual a {}: {}",
-                            formatParticipante(asistencia.getParticipante()), e.getMessage(), e);
+                // Construir HTML del mensaje e incluir link de reunión
+                StringBuilder html = new StringBuilder();
+                String flyerCid = null;
+                if (flyer != null && !flyer.isEmpty()) {
+                    flyerCid = "flyer" + System.currentTimeMillis();
+                    html.append("<p><img src=\"cid:").append(flyerCid).append("\" style=\"max-width:40%;height:auto;\"/></p>");
                 }
+                html.append("<html><body>");
+                String mensajePersonal = invitacion.getMensaje() != null ? invitacion.getMensaje().replace("{nombre}", partici.getNombres()) : "";
+                html.append("<p>").append(mensajePersonal.replace("\n", "<br/>")).append("</p>");
+                html.append("<p>").append(invitacion.getGoogleMeetLink() != null ? invitacion.getGoogleMeetLink() : "").append("</p>");
+                //html.append("<p><strong>Inicio:</strong> ").append(invitacion.getInicio() != null ? invitacion.getInicio().toString() : "").append("</p>");
+                //html.append("<p><strong>Fin:</strong> ").append(invitacion.getFin() != null ? invitacion.getFin().toString() : "").append("</p>");
+                html.append("</body></html>");
+                helper.setText(html.toString(), true);
+
+                // Manejar flyer: inline para imágenes, adjunto para otros tipos
+                if (flyer != null && !flyer.isEmpty()) {
+                    try {
+                        byte[] bytes = flyer.getBytes();
+                        if (bytes.length > 0) {
+                            String contentType = flyer.getContentType() != null ? flyer.getContentType() : "application/octet-stream";
+                            String originalName = (flyer.getOriginalFilename() != null && !flyer.getOriginalFilename().isBlank()) ? flyer.getOriginalFilename() : "flyer";
+                            if (contentType.startsWith("image/")) {
+                                helper.addInline(flyerCid, new ByteArrayResource(bytes), contentType);
+                            } else {
+                                helper.addAttachment(originalName, new ByteArrayResource(bytes), contentType);
+                            }
+                        }
+                    } catch (IOException | MessagingException e) {
+                        logger.error("Error añadiendo flyer a invitación virtual para {}: {}", formatParticipante(partici), e.getMessage(), e);
+                    }
+                }
+
+                // Adjuntar ICS si existe
+                if (icsFile != null && icsFile.exists()) {
+                    helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
+                }
+
+                mailSender.send(mimeMessage);
+            } catch (Exception e) {
+                logger.error("Error enviando invitación virtual a {}: {}",
+                        formatParticipante(asistencia.getParticipante()), e.getMessage(), e);
+            }
         }
     }
 
     // Sobrecarga: enviar invitación presencial para un evento concreto (usa asistencias)
-    public void sendInvitacionPresencial(InvitacionPresencial invitacion, Evento evento) throws Exception {
-         List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
-         String icsPath = CalendarUtil.crearArchivoICS(
-                 invitacion.getAsunto(),
-                 invitacion.getMensaje(),
-                 invitacion.getInicio(),
-                 invitacion.getFin(),
-                 invitacion.getLugar()
-         );
-         File icsFile = new File(icsPath);
+    public void sendInvitacionPresencial(InvitacionPresencial invitacion, Evento evento, MultipartFile flyer) throws Exception {
+        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
+        String icsPath = CalendarUtil.crearArchivoICS(
+                invitacion.getAsunto(),
+                invitacion.getMensaje(),
+                invitacion.getInicio(),
+                invitacion.getFin(),
+                invitacion.getLugar()
+        );
+        File icsFile = (icsPath != null) ? new File(icsPath) : null;
 
         for (Asistencia asistencia : asistenciasEvento) {
             try {
                 Participante partici = asistencia.getParticipante();
                 MimeMessage mimeMessage = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
                 helper.setTo(partici.getEmail());
                 helper.setSubject(invitacion.getAsunto());
-                helper.setText(invitacion.getMensaje().replace("{nombre}", partici.getNombres()), true);
 
-                // Adjuntar flyer si existe
-                if (invitacion.getFlyerPath() != null) {
-                    File flyer = new File(invitacion.getFlyerPath());
-                    if (flyer.exists()) {
-                        helper.addAttachment(flyer.getName(), new FileSystemResource(flyer));
+                // Construir HTML para la invitación presencial
+                StringBuilder html = new StringBuilder();
+                String flyerCid = null;
+                if (flyer != null && !flyer.isEmpty()) {
+                    flyerCid = "flyer" + System.currentTimeMillis();
+                    html.append("<p><img src=\"cid:").append(flyerCid).append("\" style=\"max-width:40%;height:auto;\"/></p>");
+                }
+                html.append("<html><body>");
+                String mensajePersonal = invitacion.getMensaje() != null ? invitacion.getMensaje().replace("{nombre}", partici.getNombres()) : "";
+                html.append("<p>").append(mensajePersonal.replace("\n", "<br/>")).append("</p>");
+                html.append("<p><strong>Lugar:</strong> ").append(invitacion.getLugar() != null ? invitacion.getLugar() : "").append("</p>");
+                html.append("<p><strong>Inicio:</strong> ").append(invitacion.getInicio() != null ? invitacion.getInicio().toString() : "").append("</p>");
+                html.append("<p><strong>Fin:</strong> ").append(invitacion.getFin() != null ? invitacion.getFin().toString() : "").append("</p>");
+                html.append("</body></html>");
+                helper.setText(html.toString(), true);
+
+                // Manejar flyer: inline para imágenes, adjunto para otros tipos
+                if (flyer != null && !flyer.isEmpty()) {
+                    try {
+                        byte[] bytes = flyer.getBytes();
+                        if (bytes.length > 0) {
+                            String contentType = flyer.getContentType() != null ? flyer.getContentType() : "application/octet-stream";
+                            String originalName = (flyer.getOriginalFilename() != null && !flyer.getOriginalFilename().isBlank()) ? flyer.getOriginalFilename() : "flyer";
+                            if (contentType.startsWith("image/")) {
+                                helper.addInline(flyerCid, new ByteArrayResource(bytes), contentType);
+                            } else {
+                                helper.addAttachment(originalName, new ByteArrayResource(bytes), contentType);
+                            }
+                        }
+                    } catch (IOException | MessagingException e) {
+                        logger.error("Error añadiendo flyer a invitación presencial para {}: {}", formatParticipante(partici), e.getMessage(), e);
                     }
                 }
 
-                // Generar QR único por participante y adjuntarlo
+                // Generar QR único por participante y adjuntarlo (mantener comportamiento existente)
                 try {
                     String attachName = "qr_" + (partici.getId() != null ? partici.getId() : System.currentTimeMillis()) + ".png";
-
-                    // Contenido que llevaremos al QR (si existe un codigo en la asistencia, lo preferimos)
                     String qrContent = (asistencia.getCodigoQr() != null && !asistencia.getCodigoQr().isBlank())
                             ? asistencia.getCodigoQr()
-                            : String.format("DEFAULT: ASISTENCIA|ID:%s|EMAIL:%s|EVENTO:%s", (partici.getId() != null ? partici.getId() : "0"), partici.getEmail(), invitacion.getAsunto());
+                            : String.format("ASISTENCIA|ID:%s|EMAIL:%s|EVENTO:%s", (partici.getId() != null ? partici.getId() : "0"), partici.getEmail(), invitacion.getAsunto());
 
                     String qrPath = null;
                     try {
-                        // Intentar guardar directamente en archivo usando el servicio (se espera que guarde en uploads/QR)
                         qrPath = qrCodeService.saveQRCodeImageToFile(qrContent, 250, 250, attachName);
                     } catch (Exception eSave) {
                         logger.warn("qrCodeService.saveQRCodeImageToFile falló: {}", eSave.getMessage());
@@ -237,14 +295,12 @@ public class EmailService {
                         if (qrFile.exists()) {
                             helper.addAttachment(qrFile.getName(), new FileSystemResource(qrFile));
                         } else {
-                            // Fallback: generar bytes y adjuntar
                             byte[] qrBytes = qrCodeService.generateQRCodeImage(qrContent, 250, 250);
                             if (qrBytes != null && qrBytes.length > 0) {
                                 helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
                             }
                         }
                     } else {
-                        // Si no se generó ruta, adjuntar desde bytes
                         byte[] qrBytes = qrCodeService.generateQRCodeImage(qrContent, 250, 250);
                         if (qrBytes != null && qrBytes.length > 0) {
                             helper.addAttachment(attachName, new ByteArrayResource(qrBytes));
@@ -254,7 +310,8 @@ public class EmailService {
                     logger.error("Error generando/adjuntando QR para {}: {}", formatParticipante(asistencia.getParticipante()), e.getMessage(), e);
                 }
 
-                if (icsFile.exists()) {
+                // Adjuntar ICS si existe
+                if (icsFile != null && icsFile.exists()) {
                     helper.addAttachment(icsFile.getName(), new FileSystemResource(icsFile));
                 }
 
@@ -262,7 +319,7 @@ public class EmailService {
             } catch (Exception e) {
                 logger.error("Error enviando invitación presencial a {}: {}", (asistencia.getParticipante() != null ? asistencia.getParticipante().getEmail() : "?"), e.getMessage(), e);
             }
-        }
-    }
+  }
+}
 
 }

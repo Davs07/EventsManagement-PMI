@@ -60,7 +60,7 @@ public class Evento {
     @OneToMany(mappedBy = "eventoPadre", cascade = CascadeType.ALL)
     private Set<Evento> eventosHijo = new HashSet<>();
 
-    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Asistencia> asistencias = new HashSet<>();
 
     // ⚠️ equals y hashCode SOLO con id

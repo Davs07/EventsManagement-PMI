@@ -1,13 +1,16 @@
 package com.api.gestion.eventos.services.Impl;
 
+import com.api.gestion.eventos.dtos.AsistenciaDTO;
 import com.api.gestion.eventos.entities.Asistencia;
 import com.api.gestion.eventos.entities.Evento;
 import com.api.gestion.eventos.entities.Participante;
+import com.api.gestion.eventos.mappers.AsistenciaMapper;
 import com.api.gestion.eventos.repositories.AsistenciaRepository;
 import com.api.gestion.eventos.repositories.EventoRepository;
 import com.api.gestion.eventos.repositories.ParticipanteRepository;
 import com.api.gestion.eventos.services.AsistenciaService;
 import com.api.gestion.eventos.services.QrCodeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
+@Slf4j
 @Service
 @Transactional
 public class AsistenciaServiceImpl implements AsistenciaService {
@@ -30,6 +33,8 @@ public class AsistenciaServiceImpl implements AsistenciaService {
     //Para QR:
     @Autowired
     private QrCodeService qrCodeService;
+    @Autowired
+    private AsistenciaMapper asistenciaMapper;
 
     @Override
     public Asistencia crearAsistencia(Asistencia asistencia) {
@@ -42,6 +47,11 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         // Asignar entidades completas
         asistencia.setParticipante(usuarioCompleto);
         asistencia.setEvento(eventoCompleto);
+
+        // Asignar rol por defecto si no viene especificado
+        if (asistencia.getRol() == null) {
+            asistencia.setRol(com.api.gestion.eventos.enums.RolParticipante.ASISTENTE);
+        }
 
         // Generar código QR único
         asistencia.setCodigoQr(UUID.randomUUID().toString());
@@ -131,5 +141,34 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             asistencia.setHoraIngreso(LocalDateTime.now());
         }
         return asistenciaRepository.save(asistencia);
+    }
+
+    @Override
+    @Transactional
+    public Asistencia crearAsistencia(Participante participante, Evento evento) {
+        // Verificar si ya existe una asistencia para este participante en este evento
+        if (asistenciaRepository.existsByParticipanteAndEvento(participante, evento)) {
+            log.info("Ya existe asistencia para participante {} en evento {}",
+                    participante.getEmail(), evento.getId());
+            return null;
+        }
+
+        // Crear la asistencia usando el mapper
+        Asistencia asistencia = AsistenciaMapper.crearAsistencia(participante, evento);
+
+        // Guardar la asistencia
+        Asistencia asistenciaGuardada = asistenciaRepository.save(asistencia);
+
+        log.info("Asistencia creada: ID {} - Participante: {} - Evento: {}",
+                asistenciaGuardada.getId(),
+                participante.getEmail(),
+                evento.getNombre());
+
+        return asistenciaGuardada;
+    }
+
+    @Override
+    public void borrarAsistencia(AsistenciaDTO asistenciaDto) {
+
     }
 }

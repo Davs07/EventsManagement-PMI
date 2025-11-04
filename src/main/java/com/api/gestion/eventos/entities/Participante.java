@@ -1,5 +1,6 @@
 package com.api.gestion.eventos.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -11,7 +12,7 @@ import java.util.Set;
 @Entity
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = "email", name = "uk_participante_email"),
-        @UniqueConstraint(columnNames = "telefono", name = "uk_participante_telefono")
+        @UniqueConstraint(columnNames = "numeroWhatsapp", name = "uk_participante_telefono")
 })
 @Getter
 @Setter
@@ -32,18 +33,18 @@ public class Participante {
     private String ciudad;
     private String rol;
     private String gradoEstudio;
-
-    @Lob
-    private byte[] evidenciaEstudio;
-
+    private String especialidad;
+    private String ieEducativa;
+    private String evidenciaEstudio;
     private String capituloPmi;
     private String idMiembroPmi;
-    private boolean cuentaConCertificadoPmi;
+    private boolean cuentaConCertificadoPmi = true;
 
-    @OneToMany(mappedBy = "participante", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    // ⚠️ CAMBIOS IMPORTANTES AQUÍ:
+    @OneToMany(mappedBy = "participante", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // ← Agregar esta anotación
     private Set<Asistencia> asistencias = new HashSet<>();
 
-    // ⚠️ equals y hashCode SOLO con id
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -14,6 +14,9 @@ import java.util.Optional;
 @Repository
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
 
+    //De Paul:
+    boolean existsByParticipanteAndEvento(Participante participante, Evento evento);
+
     List<Asistencia> findByParticipante(Participante participante);
     List<Asistencia> findByEvento(Evento evento);
     Optional<Asistencia> findByCodigoQr(String codigoQr);

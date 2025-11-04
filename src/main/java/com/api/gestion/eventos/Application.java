@@ -43,12 +43,12 @@ public class Application {
 //			for (Participante participante : participantes.subList(0, Math.min(participantes.size(), 10))) {
 //				// Verificar si ya existe asistencia para este participante y evento
 //				boolean existeAsistencia = asistenciaRepository
-//						.existsByParticipanteIdAndEventoId(participante.getId(), segundoEvento.getId());
+//						.existsByParticipanteIdAndEventoId(participante.getId(), primerEvento.getId());
 //
 //				if (!existeAsistencia) {
 //					Asistencia asistencia = new Asistencia();
 //					asistencia.setParticipante(participante);
-//					asistencia.setEvento(segundoEvento);
+//					asistencia.setEvento(primerEvento);
 //					asistencia.setCodigoQr(UUID.randomUUID().toString());
 //					asistencia.setRol(RolParticipante.ASISTENTE);
 //					asistencia.setAsistio(false);

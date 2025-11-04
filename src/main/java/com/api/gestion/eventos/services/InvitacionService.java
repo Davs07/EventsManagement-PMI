@@ -5,17 +5,18 @@ import com.api.gestion.eventos.entities.InvitacionPresencial;
 import com.api.gestion.eventos.entities.InvitacionVirtual;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class InvitacionService {
     @Autowired
     private EmailService emailService;
 
-    public void enviarInvitacionesVirtuales(InvitacionVirtual invitacion, Evento evento) throws Exception {
-        emailService.sendInvitacionVirtual(invitacion, evento);
+    public void enviarInvitacionesVirtuales(InvitacionVirtual invitacion, Evento evento, MultipartFile flyer) throws Exception {
+        emailService.sendInvitacionVirtual(invitacion, evento, flyer);
     }
 
-    public void enviarInvitacionesPresenciales(InvitacionPresencial invitacion, Evento evento) throws Exception {
-        emailService.sendInvitacionPresencial(invitacion, evento);
-    }
+    public void enviarInvitacionesPresenciales(InvitacionPresencial invitacion, Evento evento, MultipartFile flyer) throws Exception {
+        emailService.sendInvitacionPresencial(invitacion, evento,flyer);
+}
 }

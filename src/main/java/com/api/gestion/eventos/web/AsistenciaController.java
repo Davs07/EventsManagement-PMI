@@ -5,6 +5,9 @@ import com.api.gestion.eventos.entities.Asistencia;
 import com.api.gestion.eventos.mappers.AsistenciaMapper;
 import com.api.gestion.eventos.services.AsistenciaService;
 import com.api.gestion.eventos.services.QrCodeService;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("api/asistencias")
+@Slf4j
 @CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 public class AsistenciaController {
 
@@ -26,6 +30,8 @@ public class AsistenciaController {
 
     @PostMapping("/crear")
     public ResponseEntity<AsistenciaDTO> crearAsistencia(@RequestBody AsistenciaDTO dto) {
+        log.info("Crear Asistencia DTO recibido: {}", dto);
+        System.out.println("Crear Asistencia DTO recibido: " + dto);
         if (dto.getParticipanteId() == null || dto.getEventoId() == null) {
             return ResponseEntity.badRequest().build();
         }
