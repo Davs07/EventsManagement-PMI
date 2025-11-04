@@ -1,0 +1,38 @@
+# ===============================================
+# Render Configuration for Spring Boot Backend
+# ===============================================
+
+# Build configuration
+build:
+  buildCommand: ./mvnw clean package -DskipTests
+  
+# Runtime configuration
+services:
+  - type: web
+    name: EventsManagement-PMI
+    env: java
+    region: oregon
+    plan: free
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -Dserver.port=$PORT -jar target/*.jar
+    
+    # Environment variables
+    envVars:
+      - key: JAVA_TOOL_OPTIONS
+        value: -Xmx512m -Xms256m
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+        
+    # Health check
+    healthCheckPath: /actuator/health
+    
+# Notes:
+# 1. Set DATABASE_URL in Render dashboard (MySQL connection string)
+# 2. Set MAIL_USERNAME and MAIL_PASSWORD for email service
+# 3. Adjust JAVA_TOOL_OPTIONS based on your plan's memory limits
