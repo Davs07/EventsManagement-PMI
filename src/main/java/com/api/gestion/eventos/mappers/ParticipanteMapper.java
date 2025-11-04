@@ -51,13 +51,20 @@ public class ParticipanteMapper {
         participante.setApellidoMaterno(dto.getApellidoMaterno());
         participante.setDni(dto.getDni());
         participante.setEmail(dto.getEmail());
-        participante.setNumeroWhatsapp(dto.getNumeroWhatsapp());
+        
+        // Manejar numeroWhatsapp: si es vacío o null, asignar null para evitar problemas de unicidad
+        String whatsapp = dto.getNumeroWhatsapp();
+        participante.setNumeroWhatsapp((whatsapp != null && !whatsapp.trim().isEmpty()) ? whatsapp : null);
+        
         participante.setCiudad(dto.getCiudad());
         participante.setRol(dto.getRol());
         participante.setGradoEstudio(dto.getGradoEstudio());
         participante.setCapituloPmi(dto.getCapituloPmi());
         participante.setIdMiembroPmi(dto.getIdMiembroPmi());
-        participante.setCuentaConCertificadoPmi(dto.getCuentaConCertificadoPmi() != null ? dto.getCuentaConCertificadoPmi() : false);
+        
+        // Manejar correctamente el campo booleano
+        participante.setCuentaConCertificadoPmi(dto.getCuentaConCertificadoPmi() != null && dto.getCuentaConCertificadoPmi());
+        
         participante.setEvidenciaEstudio(dto.getEvidenciaEstudio());
 
 

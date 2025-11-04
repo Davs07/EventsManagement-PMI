@@ -44,6 +44,11 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         Evento eventoCompleto = eventoRepository.findById(asistencia.getEvento().getId())
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
 
+        // Verificar si ya existe una asistencia para este participante en este evento
+        if (asistenciaRepository.existsByParticipanteAndEvento(usuarioCompleto, eventoCompleto)) {
+            throw new IllegalStateException("El participante ya está registrado en este evento");
+        }
+
         // Asignar entidades completas
         asistencia.setParticipante(usuarioCompleto);
         asistencia.setEvento(eventoCompleto);
@@ -56,6 +61,7 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         // Generar código QR único
         asistencia.setCodigoQr(UUID.randomUUID().toString());
         asistencia.setAsistio(false);
+        asistencia.setFechaRegistro(LocalDateTime.now());
 
         return asistenciaRepository.save(asistencia);
     }

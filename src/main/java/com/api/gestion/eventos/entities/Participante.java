@@ -11,8 +11,8 @@ import java.util.Set;
 
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email", name = "uk_participante_email"),
-        @UniqueConstraint(columnNames = "numeroWhatsapp", name = "uk_participante_telefono")
+        @UniqueConstraint(columnNames = "email", name = "uk_participante_email")
+        // Removido la restricción de unicidad en numeroWhatsapp porque puede haber usuarios sin WhatsApp
 })
 @Getter
 @Setter
@@ -38,7 +38,7 @@ public class Participante {
     private String evidenciaEstudio;
     private String capituloPmi;
     private String idMiembroPmi;
-    private boolean cuentaConCertificadoPmi = true;
+    private boolean cuentaConCertificadoPmi = false; // Cambiado a false por defecto
 
     // ⚠️ CAMBIOS IMPORTANTES AQUÍ:
     @OneToMany(mappedBy = "participante", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

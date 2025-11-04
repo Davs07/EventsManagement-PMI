@@ -56,15 +56,20 @@ public class AsistenciaMapper {
             e.setId(dto.getEventoId());
             a.setEvento(e);
         }
+        
         // Parsear el rol del DTO si viene, validando que sea un valor válido del enum
         if (dto.getRol() != null && !dto.getRol().isEmpty()) {
             try {
                 a.setRol(RolParticipante.valueOf(dto.getRol().toUpperCase()));
             } catch (IllegalArgumentException e) {
-                // Si el rol no es válido, se dejará null para que el servicio lo maneje
-                a.setRol(null);
+                // Si el rol no es válido, asignar ASISTENTE por defecto
+                a.setRol(RolParticipante.ASISTENTE);
             }
+        } else {
+            // Si no viene rol, asignar ASISTENTE por defecto
+            a.setRol(RolParticipante.ASISTENTE);
         }
+        
         a.setHoraIngreso(dto.getHoraIngreso());
         a.setObservaciones(dto.getObservaciones());
         a.setAsistio(dto.getAsistio() != null ? dto.getAsistio() : false);

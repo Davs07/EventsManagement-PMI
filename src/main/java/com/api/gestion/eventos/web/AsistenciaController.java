@@ -29,18 +29,30 @@ public class AsistenciaController {
     private QrCodeService qrCodeService;
 
     @PostMapping("/crear")
-    public ResponseEntity<AsistenciaDTO> crearAsistencia(@RequestBody AsistenciaDTO dto) {
+    public ResponseEntity<?> crearAsistencia(@RequestBody AsistenciaDTO dto) {
         log.info("Crear Asistencia DTO recibido: {}", dto);
         System.out.println("Crear Asistencia DTO recibido: " + dto);
+        
         if (dto.getParticipanteId() == null || dto.getEventoId() == null) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("ParticipanteId y EventoId son requeridos");
         }
-        Asistencia entidad = AsistenciaMapper.toEntity(dto);
-        Asistencia creado = asistenciaService.crearAsistencia(entidad);
-        AsistenciaDTO resp = AsistenciaMapper.toDto(creado);
-        var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(creado.getId()).toUri();
-        return ResponseEntity.created(location).body(resp);
+        
+        try {
+            Asistencia entidad = AsistenciaMapper.toEntity(dto);
+            Asistencia creado = asistenciaService.crearAsistencia(entidad);
+            AsistenciaDTO resp = AsistenciaMapper.toDto(creado);
+            var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                    .buildAndExpand(creado.getId()).toUri();
+            return ResponseEntity.created(location).body(resp);
+        } catch (IllegalStateException e) {
+            // Error de duplicado
+            log.warn("Error al crear asistencia: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (RuntimeException e) {
+            // Otros errores
+            log.error("Error al crear asistencia: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
