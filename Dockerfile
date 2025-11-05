@@ -1,25 +1,52 @@
-# Stage 1: Build
+# ===================================================================
+# STAGE 1: BUILD - Compilar la aplicación con Maven y Java 21
+# ===================================================================
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy pom.xml and download dependencies
+# Copiar archivos de configuración de Maven
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+COPY .mvn .mvn
+COPY mvnw .
+COPY mvnw.cmd .
 
-# Copy source code and build
+# Hacer ejecutable el wrapper de Maven
+RUN chmod +x mvnw || true
+
+# Descargar dependencias (capa de cache)
+RUN mvn dependency:go-offline -B || ./mvnw dependency:go-offline -B
+
+# Copiar código fuente
 COPY src ./src
-RUN mvn clean package -DskipTests
 
-# Stage 2: Run
-FROM eclipse-temurin:21-jre
+# Compilar con perfil de producción (Java 21 target)
+RUN mvn clean package -Pproduction -DskipTests || ./mvnw clean package -Pproduction -DskipTests
+
+# ===================================================================
+# STAGE 2: RUNTIME - Imagen de producción optimizada
+# ===================================================================
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Copy jar from build stage
+# Crear usuario no-root para seguridad
+RUN groupadd -r spring && useradd -r -g spring spring
+
+# Copiar JAR compilado desde la etapa de build
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose port
+# Cambiar ownership del directorio
+RUN chown -R spring:spring /app
+
+# Cambiar a usuario no-root
+USER spring
+
+# Exponer puerto (Render asigna dinámicamente via $PORT)
 EXPOSE 8080
 
-# Set production profile and run application
+# Variables de entorno por defecto (Render las sobrescribirá)
 ENV SPRING_PROFILES_ACTIVE=production
-ENTRYPOINT ["java", "-Dserver.port=${PORT:-8080}", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}", "-jar", "app.jar"]
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+
+# Comando de inicio con variables de entorno
+# Render pasa PORT, AIVEN_DATABASE_URL, AIVEN_DB_USERNAME, AIVEN_DB_PASSWORD, etc.
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-production} -jar app.jar"]
