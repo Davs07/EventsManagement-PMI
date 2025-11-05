@@ -20,6 +20,17 @@ import java.util.UUID;
 public class Application {
 
 	public static void main(String[] args) {
+		// Log de variables de entorno ANTES de iniciar Spring
+		System.out.println("==========================================================");
+		System.out.println("ENVIRONMENT VARIABLES DEBUG - BEFORE SPRING BOOT START");
+		System.out.println("==========================================================");
+		System.out.println("SPRING_PROFILES_ACTIVE: " + System.getenv("SPRING_PROFILES_ACTIVE"));
+		System.out.println("AIVEN_DATABASE_URL exists: " + (System.getenv("AIVEN_DATABASE_URL") != null));
+		System.out.println("AIVEN_DB_USERNAME exists: " + (System.getenv("AIVEN_DB_USERNAME") != null));
+		System.out.println("AIVEN_DB_PASSWORD exists: " + (System.getenv("AIVEN_DB_PASSWORD") != null));
+		System.out.println("PORT: " + System.getenv("PORT"));
+		System.out.println("==========================================================");
+		
 		SpringApplication.run(Application.class, args);
 	}
 
