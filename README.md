@@ -201,7 +201,7 @@ Este proyecto está bajo la Licencia MIT. Consulte el archivo `LICENSE` para má
 
 ## Autores
 
-- **David** - Desarrollador Principal - [@Davs07](https://github.com/Davs07)
+-
 
 ## Soporte
 
