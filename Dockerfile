@@ -6,21 +6,15 @@ WORKDIR /app
 
 # Copiar archivos de configuración de Maven
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
-COPY mvnw.cmd .
-
-# Hacer ejecutable el wrapper de Maven
-RUN chmod +x mvnw || true
 
 # Descargar dependencias (capa de cache)
-RUN mvn dependency:go-offline -B || ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # Copiar código fuente
 COPY src ./src
 
 # Compilar con perfil de producción (Java 21 target)
-RUN mvn clean package -Pproduction -DskipTests || ./mvnw clean package -Pproduction -DskipTests
+RUN mvn clean package -Pproduction -DskipTests
 
 # ===================================================================
 # STAGE 2: RUNTIME - Imagen de producción optimizada
