@@ -29,4 +29,6 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     //Metodo para buscar asistencia por participante y evento para cambiar estado de asistencia a true o false
     @Query("SELECT a FROM Asistencia a WHERE a.participante.id = :participanteId AND a.evento.id = :eventoId")
     Optional<Asistencia> findByParticipanteIdAndEventoId(@Param("participanteId") Long participanteId, @Param("eventoId") Long eventoId);
+
+    List<Asistencia> findByEvento_IdAndAsistio(Long eventoId, boolean b);
 }

@@ -321,5 +321,27 @@ public class EmailService {
             }
   }
 }
+    public void enviarCertificado(String destinatario, String nombre,
+                                  byte[] pdfBytes, String nombreEvento)
+            throws MessagingException {
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setFrom("pminorteperu1@gmail.com");
+        helper.setTo(destinatario);
+        helper.setSubject("🎓 Certificado de Participación - " + nombreEvento);
+
+        String contenido = String.format("""
+        <h2>¡Felicitaciones %s!</h2>
+        <p>Adjunto encontrarás tu certificado de participación en <strong>%s</strong>.</p>
+        <p>Tu código de certificado te permitirá verificar su autenticidad.</p>
+        """, nombre, nombreEvento);
+
+        helper.setText(contenido, true);
+        helper.addAttachment("Certificado.pdf", new ByteArrayResource(pdfBytes));
+
+        mailSender.send(message);
+    }
 
 }

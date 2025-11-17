@@ -21,6 +21,7 @@ public class EventoDTO {
     private Long capacidadMaxima;
     private Boolean brindaCertificado;
     private String plantillaImagen; // Base64 o null
+    private String plantillaCertificado;// Agregar campo en el DTO (como String base64)
     private LocalDateTime fechaCreacion;
     private String estadoEvento; // nombre del enum
 

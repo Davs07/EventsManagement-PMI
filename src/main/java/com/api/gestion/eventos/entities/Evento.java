@@ -46,6 +46,10 @@ public class Evento {
 
     @Lob
     private byte[] plantillaImagen;
+    //nuevo campo para la plantilla del certificado
+    @Lob
+    @Column(name = "plantilla_certificado", columnDefinition = "LONGBLOB")
+    private byte[] plantillaCertificado;
 
     @Column(nullable = false)
     private LocalDateTime fechaCreacion = LocalDateTime.now();

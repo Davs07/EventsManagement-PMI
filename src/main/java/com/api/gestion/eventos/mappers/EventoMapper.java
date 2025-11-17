@@ -24,6 +24,10 @@ public class EventoMapper {
         if (e.getPlantillaImagen() != null) {
             dto.setPlantillaImagen(Base64.getEncoder().encodeToString(e.getPlantillaImagen()));
         }
+        // Agregar conversión de plantilla certificado a base64
+        if (e.getPlantillaCertificado() != null) {
+            dto.setPlantillaCertificado(Base64.getEncoder().encodeToString(e.getPlantillaCertificado()));
+        }
         dto.setFechaCreacion(e.getFechaCreacion());
         dto.setEstadoEvento(e.getEstadoEvento() != null ? e.getEstadoEvento().name() : null);
 
