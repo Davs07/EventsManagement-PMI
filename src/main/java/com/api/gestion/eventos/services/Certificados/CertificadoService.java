@@ -99,7 +99,7 @@ public class CertificadoService {
             // Rol
             canvas.beginText()
                     .setFontAndSize(font, 14f)
-                    .moveText(317.12f, 282.66f)
+                    .moveText(317.12f, 281.66f)
                     .showText(asistencia.getRol().name())
                     .endText();
 
@@ -118,7 +118,7 @@ public class CertificadoService {
     }
 
     @Transactional
-    public void enviarCertificadosEvento(Long eventoId) throws Exception {
+    public void enviarCertificadosEvento(Long eventoId, String mensaje) throws Exception {
         List<Asistencia> asistencias = asistenciaRepository.findByEvento_IdAndAsistio(eventoId, true);
 
         int enviados = 0;
@@ -162,7 +162,8 @@ public class CertificadoService {
                         asistencia.getParticipante().getEmail(),
                         asistencia.getParticipante().getNombres(),
                         pdfBytes,
-                        asistencia.getEvento().getNombre()
+                        asistencia.getEvento().getNombre(),
+                        mensaje
                 );
 
                 certificado.setEnviado(true);

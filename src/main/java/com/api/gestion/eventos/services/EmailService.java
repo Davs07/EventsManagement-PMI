@@ -322,7 +322,7 @@ public class EmailService {
   }
 }
     public void enviarCertificado(String destinatario, String nombre,
-                                  byte[] pdfBytes, String nombreEvento)
+                                  byte[] pdfBytes, String nombreEvento, String mensaje)
             throws MessagingException {
 
         MimeMessage message = mailSender.createMimeMessage();
@@ -335,8 +335,9 @@ public class EmailService {
         String contenido = String.format("""
         <h2>¡Felicitaciones %s!</h2>
         <p>Adjunto encontrarás tu certificado de participación en <strong>%s</strong>.</p>
+        <p>%s</p>
         <p>Tu código de certificado te permitirá verificar su autenticidad.</p>
-        """, nombre, nombreEvento);
+        """, nombre, nombreEvento, mensaje != null ? mensaje : "");
 
         helper.setText(contenido, true);
         helper.addAttachment("Certificado.pdf", new ByteArrayResource(pdfBytes));

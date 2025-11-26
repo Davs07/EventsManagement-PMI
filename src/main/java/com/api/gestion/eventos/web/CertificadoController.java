@@ -7,15 +7,16 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/certificados")
+@CrossOrigin("http://localhost:3000/")
 public class CertificadoController {
 
     @Autowired
     private CertificadoService certificadoService;
 
     @PostMapping("/evento/{eventoId}/enviar")
-    public ResponseEntity<String> enviarCertificados(@PathVariable Long eventoId) {
+    public ResponseEntity<String> enviarCertificados(@PathVariable Long eventoId, @RequestParam String mensaje) {
         try {
-            certificadoService.enviarCertificadosEvento(eventoId);
+            certificadoService.enviarCertificadosEvento(eventoId, mensaje);
             return ResponseEntity.ok("Certificados enviados correctamente");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error: " + e.getMessage());
