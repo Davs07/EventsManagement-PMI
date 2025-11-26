@@ -2,8 +2,11 @@ package com.api.gestion.eventos.repositories;
 
 import com.api.gestion.eventos.entities.Participante;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -13,4 +16,9 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Long
 //    Participante findByEmail(String email);
 
     Optional<Participante> findByEmail(String email);
+
+    @Query("SELECT DISTINCT p FROM Participante p " +
+            "LEFT JOIN FETCH p.asistencias a " +
+            "WHERE a.evento.id = :eventoId")
+    List<Participante> findByEventoIdWithAsistencia(@Param("eventoId") Long eventoId);
 }

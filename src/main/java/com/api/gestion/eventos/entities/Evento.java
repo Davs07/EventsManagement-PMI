@@ -61,7 +61,7 @@ public class Evento {
     @ManyToOne(fetch = FetchType.LAZY)
     private Evento eventoPadre;
 
-    @OneToMany(mappedBy = "eventoPadre", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "eventoPadre", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Evento> eventosHijo = new HashSet<>();
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)

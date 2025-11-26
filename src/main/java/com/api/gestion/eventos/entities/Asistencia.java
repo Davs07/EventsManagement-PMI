@@ -21,11 +21,9 @@ public class Asistencia {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JsonBackReference(value = "participante-asistencias")
     private Participante participante;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JsonBackReference(value = "evento-asistencias")
     private Evento evento;
 
     @Enumerated(EnumType.STRING)

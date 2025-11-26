@@ -74,16 +74,22 @@ public class AsistenciaServiceImpl implements AsistenciaService {
 
     @Override
     public List<Asistencia> obtenerAsistenciasPorUsuario(Long usuarioId) {
-        Participante usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + usuarioId));
-        return asistenciaRepository.findByParticipante(usuario);
+        // La query en repositorio ya verificará si existen asistencias
+        List<Asistencia> asistencias = asistenciaRepository.findByParticipante(usuarioId);
+        if (asistencias.isEmpty()) {
+            throw new RuntimeException("No se encontraron asistencias para el usuario: " + usuarioId);
+        }
+        return asistencias;
     }
 
     @Override
     public List<Asistencia> obtenerAsistenciasPorEvento(Long eventoId) {
-        Evento evento = eventoRepository.findById(eventoId)
-                .orElseThrow(() -> new RuntimeException("Evento no encontrado con id: " + eventoId));
-        return asistenciaRepository.findByEvento(evento);
+        // Verificar que el evento existe
+        if (!eventoRepository.existsById(eventoId)) {
+            throw new RuntimeException("Evento no encontrado con id: " + eventoId);
+        }
+        // Llamar al método optimizado que usa JOIN FETCH
+        return asistenciaRepository.findByEvento(eventoId);
     }
 
     @Override

@@ -47,7 +47,7 @@ public class EmailService {
                                                          String resumenEvento, String descripcionEvento,
                                                          ZonedDateTime inicio, ZonedDateTime fin, String lugar,
                                                          Evento evento) {
-        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
+        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento.getId());
         String icsPath;
         try {
             icsPath = CalendarUtil.crearArchivoICS(resumenEvento, descripcionEvento, inicio, fin, lugar);
@@ -156,7 +156,7 @@ public class EmailService {
     }
 
     public void sendInvitacionVirtual(InvitacionVirtual invitacion, Evento evento, MultipartFile flyer) throws Exception {
-        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
+        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento.getId());
 
         String icsPath = CalendarUtil.crearArchivoICS(
                 invitacion.getAsunto(),
@@ -224,7 +224,7 @@ public class EmailService {
 
     // Sobrecarga: enviar invitación presencial para un evento concreto (usa asistencias)
     public void sendInvitacionPresencial(InvitacionPresencial invitacion, Evento evento, MultipartFile flyer) throws Exception {
-        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento);
+        List<Asistencia> asistenciasEvento = asistenciaRepository.findByEvento(evento.getId());
         String icsPath = CalendarUtil.crearArchivoICS(
                 invitacion.getAsunto(),
                 invitacion.getMensaje(),

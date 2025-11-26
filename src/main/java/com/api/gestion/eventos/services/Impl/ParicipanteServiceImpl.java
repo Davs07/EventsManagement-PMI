@@ -2,6 +2,7 @@ package com.api.gestion.eventos.services.Impl;
 
 import com.api.gestion.eventos.dtos.ParticipanteDto;
 import com.api.gestion.eventos.entities.Participante;
+import com.api.gestion.eventos.entities.ParticipanteConAsistenciaDTO;
 import com.api.gestion.eventos.mappers.ParticipanteMapper;
 import com.api.gestion.eventos.repositories.AsistenciaRepository;
 import com.api.gestion.eventos.repositories.ParticipanteRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ParicipanteServiceImpl implements ParticipanteService {
@@ -57,5 +59,36 @@ public class ParicipanteServiceImpl implements ParticipanteService {
         List<Participante> participantes = asistenciaRepository.findParticipantesByEventoId(eventoId);
         participantes.sort(Comparator.comparing(Participante::getApellidoPaterno));
         return ParticipanteMapper.mapearaListaDto(participantes);
+    }
+
+    public List<ParticipanteConAsistenciaDTO> getParticipantesConAsistencia(Long eventoId) {
+        List<Participante> participantes = participanteRepository.findByEventoIdWithAsistencia(eventoId);
+
+        return participantes.stream()
+                .map(p -> {
+                    ParticipanteConAsistenciaDTO dto = new ParticipanteConAsistenciaDTO();
+                    dto.setId(p.getId());
+                    dto.setNombres(p.getNombres());
+                    dto.setApellidoPaterno(p.getApellidoPaterno());
+                    dto.setApellidoMaterno(p.getApellidoMaterno());
+                    dto.setDni(p.getDni());
+                    dto.setEmail(p.getEmail());
+                    dto.setTelefono(p.getNumeroWhatsapp());
+
+                    // Buscar la asistencia del evento actual
+                    p.getAsistencias().stream()
+                            .filter(a -> a.getEvento().getId().equals(eventoId))
+                            .findFirst()
+                            .ifPresent(asistencia -> {
+                                ParticipanteConAsistenciaDTO.AsistenciaDTO asistenciaDTO =
+                                        new ParticipanteConAsistenciaDTO.AsistenciaDTO();
+                                asistenciaDTO.setAsistio(asistencia.getAsistio());
+                                asistenciaDTO.setHoraIngreso(asistencia.getHoraIngreso());
+                                dto.setAsistencia(asistenciaDTO);
+                            });
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }
