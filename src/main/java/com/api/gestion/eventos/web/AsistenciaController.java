@@ -20,7 +20,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("api/asistencias")
 @Slf4j
-@CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 public class AsistenciaController {
 
     @Autowired

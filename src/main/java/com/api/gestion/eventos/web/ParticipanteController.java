@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/participante")
-@CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 public class ParticipanteController {
     @Autowired
     private ParticipanteService participanteService;

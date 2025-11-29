@@ -15,7 +15,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/test")
-@CrossOrigin(origins = "*") // Ajustar según tu configuración CORS
 @RequiredArgsConstructor
 @Slf4j
 public class CargaArchivoController {

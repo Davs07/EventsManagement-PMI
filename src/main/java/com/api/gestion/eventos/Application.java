@@ -1,5 +1,10 @@
 package com.api.gestion.eventos;
 
+import com.api.gestion.eventos.auth.entity.PermissionEntity;
+import com.api.gestion.eventos.auth.entity.RoleEntity;
+import com.api.gestion.eventos.auth.entity.RoleEnum;
+import com.api.gestion.eventos.auth.entity.UserEntity;
+import com.api.gestion.eventos.auth.repository.UserRepository;
 import com.api.gestion.eventos.entities.Asistencia;
 import com.api.gestion.eventos.entities.Evento;
 import com.api.gestion.eventos.entities.Participante;
@@ -14,6 +19,7 @@ import org.springframework.context.annotation.Bean;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -25,37 +31,53 @@ public class Application {
 
 
 //	@Bean
-//	CommandLineRunner start(AsistenciaRepository asistenciaRepository,
-//							EventoRepository eventoRepository,
-//							ParticipanteRepository participanteRepository) {
+//	CommandLineRunner init(UserRepository userRepository) {
 //		return args -> {
-//			// Validar que existan eventos
-//			List<Evento> eventos = eventoRepository.findAll();
-//			if (eventos.isEmpty()) {
-//				System.out.println("No hay eventos disponibles para crear asistencias");
-//				return;
-//			}
+//			/* Create PERMISSIONS */
+//			PermissionEntity createPermission = PermissionEntity.builder()
+//					.name("CREATE")
+//					.build();
 //
-//			Evento primerEvento = eventos.get(0);
-//			Evento segundoEvento = eventos.get(1);
-//			List<Participante> participantes = participanteRepository.findAll();
+//			PermissionEntity readPermission = PermissionEntity.builder()
+//					.name("READ")
+//					.build();
 //
-//			for (Participante participante : participantes.subList(0, Math.min(participantes.size(), 10))) {
-//				// Verificar si ya existe asistencia para este participante y evento
-//				boolean existeAsistencia = asistenciaRepository
-//						.existsByParticipanteIdAndEventoId(participante.getId(), primerEvento.getId());
+//			PermissionEntity updatePermission = PermissionEntity.builder()
+//					.name("UPDATE")
+//					.build();
 //
-//				if (!existeAsistencia) {
-//					Asistencia asistencia = new Asistencia();
-//					asistencia.setParticipante(participante);
-//					asistencia.setEvento(primerEvento);
-//					asistencia.setCodigoQr(UUID.randomUUID().toString());
-//					asistencia.setRol(RolParticipante.ASISTENTE);
-//					asistencia.setAsistio(false);
-//					asistenciaRepository.save(asistencia);
-//					System.out.println("Asistencia creada para: " + participante.getNombres());
-//				}
-//			}
+//			PermissionEntity deletePermission = PermissionEntity.builder()
+//					.name("DELETE")
+//					.build();
+//
+//			PermissionEntity refactorPermission = PermissionEntity.builder()
+//					.name("REFACTOR")
+//					.build();
+//
+//			/* Create ROLES */
+//			RoleEntity roleAdmin = RoleEntity.builder()
+//					.roleEnum(RoleEnum.ADMIN)
+//					.permissionList(Set.of(createPermission, readPermission, updatePermission, deletePermission, refactorPermission))
+//					.build();
+//
+//			RoleEntity roleUser = RoleEntity.builder()
+//					.roleEnum(RoleEnum.USER)
+//					.permissionList(Set.of(readPermission))
+//					.build();
+//
+//			/* CREATE USERS */
+//			UserEntity userFernando = UserEntity.builder()
+//					.username("Fernando")
+//					.password("$2a$10$cMY29RPYoIHMJSuwRfoD3eQxU1J5Rww4VnNOUOAEPqCBshkNfrEf6")
+//					.isEnabled(true)
+//					.accountNoExpired(true)
+//					.accountNoLocked(true)
+//					.credentialNoExpired(true)
+//					.roles(Set.of(roleAdmin))
+//					.build();
+//
+//
+//			userRepository.save(userFernando);
 //		};
 //	}
 }

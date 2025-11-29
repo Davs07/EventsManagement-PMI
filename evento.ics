@@ -3,12 +3,12 @@ PRODID:-//Eventos Facultad//iCal4j 1.0//ES
 VERSION:2.0
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
-DTSTAMP:20251113T223809Z
-DTSTART:20251113T164000
-DTEND:20251114T164000
-SUMMARY:Mensaje de aviso
-DESCRIPTION:Hola {nombre}\,\n\neste mensaje es para avisar que los certificados se enviaran a partir del dia tal: 
-LOCATION:Evento Virtual - Google Meet
-UID:d0928ccf-62e8-47f1-bf91-2d99eaee8048
+DTSTAMP:20251129T230907Z
+DTSTART:20251126T172200
+DTEND:20251126T172200
+SUMMARY:Invitación Presencial: Evento de Nicol
+DESCRIPTION:Hola {nombre}\,\n\nEstás invitado al evento presencial \"Evento de Nicol\".\n\nTu código QR de entrada va adjunto.
+LOCATION:Lima
+UID:762839c5-61a7-4cc5-a731-88528a3d082c
 END:VEVENT
 END:VCALENDAR

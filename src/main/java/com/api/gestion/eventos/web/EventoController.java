@@ -23,7 +23,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/eventos")
-@CrossOrigin(origins = "*")
 public class EventoController {
     @Autowired
     private EventoService eventoService;
@@ -119,7 +118,7 @@ public class EventoController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         try {
             eventoService.eliminarEvento(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok().build();
         } catch (RuntimeException ex) {
             return ResponseEntity.notFound().build();
         }
