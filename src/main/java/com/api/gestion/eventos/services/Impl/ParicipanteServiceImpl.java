@@ -3,6 +3,7 @@ package com.api.gestion.eventos.services.Impl;
 import com.api.gestion.eventos.dtos.ParticipanteDto;
 import com.api.gestion.eventos.entities.Participante;
 import com.api.gestion.eventos.entities.ParticipanteConAsistenciaDTO;
+import com.api.gestion.eventos.enums.RolParticipante;
 import com.api.gestion.eventos.mappers.ParticipanteMapper;
 import com.api.gestion.eventos.repositories.AsistenciaRepository;
 import com.api.gestion.eventos.repositories.ParticipanteRepository;
@@ -62,7 +63,7 @@ public class ParicipanteServiceImpl implements ParticipanteService {
     }
 
     public List<ParticipanteConAsistenciaDTO> getParticipantesConAsistencia(Long eventoId) {
-        List<Participante> participantes = participanteRepository.findByEventoIdWithAsistencia(eventoId);
+        List<Participante> participantes = participanteRepository.findByEventoIdWithAsistencia(eventoId, RolParticipante.ASISTENTE);
 
         return participantes.stream()
                 .map(p -> {
@@ -77,7 +78,39 @@ public class ParicipanteServiceImpl implements ParticipanteService {
 
                     // Buscar la asistencia del evento actual
                     p.getAsistencias().stream()
-                            .filter(a -> a.getEvento().getId().equals(eventoId))
+                            .filter(a -> a.getEvento().getId().equals(eventoId) && a.getRol() == RolParticipante.ASISTENTE)
+                            .findFirst()
+                            .ifPresent(asistencia -> {
+                                ParticipanteConAsistenciaDTO.AsistenciaDTO asistenciaDTO =
+                                        new ParticipanteConAsistenciaDTO.AsistenciaDTO();
+                                asistenciaDTO.setAsistio(asistencia.getAsistio());
+                                asistenciaDTO.setHoraIngreso(asistencia.getHoraIngreso());
+                                dto.setAsistencia(asistenciaDTO);
+                            });
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ParticipanteConAsistenciaDTO> getParticipantesPonentes(Long eventoId) {
+        List<Participante> participantes = participanteRepository.findByEventoIdAndRolWithAsistencia(eventoId, RolParticipante.PONENTE);
+
+        return participantes.stream()
+                .map(p -> {
+                    ParticipanteConAsistenciaDTO dto = new ParticipanteConAsistenciaDTO();
+                    dto.setId(p.getId());
+                    dto.setNombres(p.getNombres());
+                    dto.setApellidoPaterno(p.getApellidoPaterno());
+                    dto.setApellidoMaterno(p.getApellidoMaterno());
+                    dto.setDni(p.getDni());
+                    dto.setEmail(p.getEmail());
+                    dto.setTelefono(p.getNumeroWhatsapp());
+
+                    // Buscar la asistencia del evento actual con rol PONENTE
+                    p.getAsistencias().stream()
+                            .filter(a -> a.getEvento().getId().equals(eventoId) && a.getRol() == RolParticipante.PONENTE)
                             .findFirst()
                             .ifPresent(asistencia -> {
                                 ParticipanteConAsistenciaDTO.AsistenciaDTO asistenciaDTO =

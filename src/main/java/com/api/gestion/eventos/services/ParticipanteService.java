@@ -15,4 +15,7 @@ public interface ParticipanteService {
     //Listar participantes por evento
     List<ParticipanteDto> listarPorEvento(Long eventoId);
     List<ParticipanteConAsistenciaDTO> getParticipantesConAsistencia(Long eventoId);
+
+    //Listar participantes ponentes por evento
+    List<ParticipanteConAsistenciaDTO> getParticipantesPonentes(Long eventoId);
 }

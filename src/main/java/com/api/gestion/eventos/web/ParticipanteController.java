@@ -51,4 +51,12 @@ public class ParticipanteController {
                 participanteService.getParticipantesConAsistencia(eventoId);
         return ResponseEntity.ok(participantes);
     }
+
+    @GetMapping("/evento/{eventoId}/ponentes")
+    public ResponseEntity<List<ParticipanteConAsistenciaDTO>> getParticipantesPonentes(
+            @PathVariable Long eventoId) {
+        List<ParticipanteConAsistenciaDTO> participantes =
+                participanteService.getParticipantesPonentes(eventoId);
+        return ResponseEntity.ok(participantes);
+    }
 }

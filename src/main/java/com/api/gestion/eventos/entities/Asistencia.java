@@ -31,6 +31,7 @@ public class Asistencia {
 
     private LocalDateTime horaIngreso;
 
+    //NO SE USA
     @Lob
     private byte[] certificado;
 

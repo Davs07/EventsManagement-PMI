@@ -3,6 +3,7 @@ package com.api.gestion.eventos.services.Certificados;
 import com.api.gestion.eventos.entities.Asistencia;
 import com.api.gestion.eventos.entities.Certificado;
 import com.api.gestion.eventos.entities.Evento;
+import com.api.gestion.eventos.enums.RolParticipante;
 import com.api.gestion.eventos.repositories.AsistenciaRepository;
 import com.api.gestion.eventos.repositories.CertificadoRepository;
 import com.api.gestion.eventos.services.EmailService;
@@ -43,6 +44,7 @@ public class CertificadoService {
     @Autowired
     private EmailService emailService;
 
+    @Transactional
     public byte[] generarCertificadoPDF(Asistencia asistencia, String codigoCertificado)
             throws IOException {
 
@@ -97,12 +99,20 @@ public class CertificadoService {
                     .endText();
 
             // Rol
-            canvas.beginText()
-                    .setFontAndSize(font, 14f)
-                    .moveText(317.12f, 281.66f)
-                    .showText(asistencia.getRol().name())
-                    .endText();
 
+            if (asistencia.getRol().name().equals(RolParticipante.ASISTENTE.name())) {
+                canvas.beginText()
+                        .setFontAndSize(font, 14f)
+                        .moveText(317.12f, 281.66f)
+                        .showText(RolParticipante.ASISTENTE.name())
+                        .endText();
+            } else if (asistencia.getRol().name().equals(RolParticipante.PONENTE.name())) {
+                canvas.beginText()
+                        .setFontAndSize(font, 14f)
+                        .moveText(323.12f, 281.66f)
+                        .showText(RolParticipante.PONENTE.name())
+                        .endText();
+            }
             // Código de certificado
             canvas.beginText()
                     .setFontAndSize(font, 12)

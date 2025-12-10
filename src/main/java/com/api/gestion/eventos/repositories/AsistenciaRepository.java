@@ -15,21 +15,20 @@ import java.util.Optional;
 @Repository
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
 
-    // ✅ Optimizado: Carga TODO en una sola query
+    // Optimizado: Carga TODO en una sola query
     @Query("SELECT DISTINCT a FROM Asistencia a " +
             "JOIN FETCH a.participante p " +
             "JOIN FETCH a.evento e " +
             "WHERE a.evento.id = :eventoId")
     List<Asistencia> findByEvento(@Param("eventoId") Long eventoId);
 
-    // ✅ Para obtener solo participantes sin duplicados
+    // Para obtener solo participantes sin duplicados
     @Query("SELECT DISTINCT p FROM Participante p " +
             "INNER JOIN Asistencia a ON a.participante.id = p.id " +
             "WHERE a.evento.id = :eventoId " +
             "ORDER BY p.apellidoPaterno")
     List<Participante> findParticipantesByEventoId(@Param("eventoId") Long eventoId);
 
-    // ✅ Otras queries optimizadas
     @Query("SELECT a FROM Asistencia a " +
             "JOIN FETCH a.participante " +
             "JOIN FETCH a.evento " +
